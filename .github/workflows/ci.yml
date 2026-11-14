@@ -11,26 +11,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install MoonBit stable for dependency resolution
-        if: ${{ matrix.os != 'windows-latest' }}
-        run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
-          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
-      - name: Install MoonBit stable on Windows for dependency resolution
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: |
-          Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
-          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
-          "C:\Users\runneradmin\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
-      - name: Fetch dependencies and migrate the legacy manifest
-        shell: bash
-        run: |
-          moon update
-          moon check --target native || {
-            test -d .mooncakes/Milky2018/html
-            cd .mooncakes/Milky2018/html
-            moon fmt
-          }
       - name: Install MoonBit nightly
         if: ${{ matrix.os != 'windows-latest' }}
         run: |
@@ -43,6 +23,15 @@ jobs:
           $env:MOONBIT_INSTALL_VERSION = "nightly"
           irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
           "C:\Users\runneradmin\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+      - name: Fetch dependencies and migrate the legacy manifest
+        shell: bash
+        run: |
+          moon update
+          moon check --target native || {
+            test -d .mooncakes/Milky2018/html
+            (cd .mooncakes/Milky2018/html && moon fmt)
+            moon check --target native
+          }
       - name: Bundle core for the experimental llvm backend
         shell: bash
         run: moon -C "$HOME/.moon/lib/core" bundle --warn-list -a --target llvm || true
@@ -70,26 +59,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install MoonBit stable for dependency resolution
-        if: ${{ matrix.os != 'windows-latest' }}
-        run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
-          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
-      - name: Install MoonBit stable on Windows for dependency resolution
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: |
-          Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
-          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
-          "C:\Users\runneradmin\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
-      - name: Fetch dependencies and migrate the legacy manifest
-        shell: bash
-        run: |
-          moon update
-          moon check --target native || {
-            test -d .mooncakes/Milky2018/html
-            cd .mooncakes/Milky2018/html
-            moon fmt
-          }
       - name: Install MoonBit nightly
         if: ${{ matrix.os != 'windows-latest' }}
         run: |
@@ -102,6 +71,15 @@ jobs:
           $env:MOONBIT_INSTALL_VERSION = "nightly"
           irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
           "C:\Users\runneradmin\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+      - name: Fetch dependencies and migrate the legacy manifest
+        shell: bash
+        run: |
+          moon update
+          moon check --target native || {
+            test -d .mooncakes/Milky2018/html
+            (cd .mooncakes/Milky2018/html && moon fmt)
+            moon check --target native
+          }
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -110,6 +88,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          failed=0
           for target in native js wasm; do
             echo "## ${{ matrix.os }} / ${target}" | tee -a results.md
             echo "" >> results.md
@@ -119,9 +98,11 @@ jobs:
               echo '```' >> results.md
             else
               echo "_(target failed or unsupported)_" >> results.md
+              failed=1
             fi
             echo "" >> results.md
           done
+          exit "$failed"
       - name: Summary
         shell: bash
         run: cat results.md >> "$GITHUB_STEP_SUMMARY"
