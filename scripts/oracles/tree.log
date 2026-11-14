@@ -1,0 +1,167 @@
+bun test v1.3.11 (af24e281)
+
+src\tree.test.ts:
+ORACLE ["empty","",[]]
+(pass) build() > matches htmlparser2 :: empty
+ORACLE ["text only","hello &amp; world",[[0,"text","hello & world"]]]
+(pass) build() > matches htmlparser2 :: text only
+ORACLE ["basic document","<!doctype html><html><head><title>Hi</title></head><body><p>x</p></body></html>",[[0,"directive",""],[0,"element","html {}"],[1,"element","head {}"],[2,"element","title {}"],[3,"text","Hi"],[1,"element","body {}"],[2,"element","p {}"],[3,"text","x"]]]
+(pass) build() > matches htmlparser2 :: basic document
+ORACLE ["uppercase tags","<DIV ID=a><SPAN>x</SPAN></DIV>",[[0,"element","div {\"id\":\"a\"}"],[1,"element","span {}"],[2,"text","x"]]]
+(pass) build() > matches htmlparser2 :: uppercase tags
+ORACLE ["attributes, quoted","<a href=\"x\" title='y' data-z=z>t</a>",[[0,"element","a {\"href\":\"x\",\"title\":\"y\",\"data-z\":\"z\"}"],[1,"text","t"]]]
+(pass) build() > matches htmlparser2 :: attributes, quoted
+ORACLE ["attributes, no value","<input disabled checked>",[[0,"element","input {\"disabled\":\"\",\"checked\":\"\"}"]]]
+(pass) build() > matches htmlparser2 :: attributes, no value
+ORACLE ["attributes, duplicates","<a href=\"first\" href=\"second\">t</a>",[[0,"element","a {\"href\":\"first\"}"],[1,"text","t"]]]
+(pass) build() > matches htmlparser2 :: attributes, duplicates
+ORACLE ["attributes, mixed case","<meta charSet=\"utf-8\" ConTent=x>",[[0,"element","meta {\"charset\":\"utf-8\",\"content\":\"x\"}"]]]
+(pass) build() > matches htmlparser2 :: attributes, mixed case
+ORACLE ["attributes, entities","<a href=\"?a=1&amp;b=2&lt;\" title=\"&quot;q&quot;\">t</a>",[[0,"element","a {\"href\":\"?a=1&b=2<\",\"title\":\"\\\"q\\\"\"}"],[1,"text","t"]]]
+(pass) build() > matches htmlparser2 :: attributes, entities
+ORACLE ["attributes, '>' in quotes","<div title=\"a>b\" data-x='c>d'>x</div>",[[0,"element","div {\"title\":\"a>b\",\"data-x\":\"c>d\"}"],[1,"text","x"]]]
+(pass) build() > matches htmlparser2 :: attributes, '>' in quotes
+ORACLE ["attributes, unquoted slash","<a href=/x/>t</a>",[[0,"element","a {\"href\":\"/x/\"}"],[1,"text","t"]]]
+(pass) build() > matches htmlparser2 :: attributes, unquoted slash
+ORACLE ["attributes, newlines","<a\n  href=\"x\"\n  class=\"y\"\n>t</a>",[[0,"element","a {\"href\":\"x\",\"class\":\"y\"}"],[1,"text","t"]]]
+(pass) build() > matches htmlparser2 :: attributes, newlines
+ORACLE ["attributes, doubled quote","<a href=\"/x\"\">link</a><p>Hello</p>",[[0,"element","a {\"href\":\"/x\",\"\\\"\":\"\"}"],[1,"text","link"],[0,"element","p {}"],[1,"text","Hello"]]]
+(pass) build() > matches htmlparser2 :: attributes, doubled quote
+ORACLE ["attributes, doubled single quote","<a b='c''>x</a><p>y</p>",[[0,"element","a {\"b\":\"c\",\"'\":\"\"}"],[1,"text","x"],[0,"element","p {}"],[1,"text","y"]]]
+(pass) build() > matches htmlparser2 :: attributes, doubled single quote
+ORACLE ["attributes, quote in name","<div data-x\"y>one</div><p>Hello</p><span z\">two</span>",[[0,"element","div {\"data-x\\\"y\":\"\"}"],[1,"text","one"],[0,"element","p {}"],[1,"text","Hello"],[0,"element","span {\"z\\\"\":\"\"}"],[1,"text","two"]]]
+(pass) build() > matches htmlparser2 :: attributes, quote in name
+ORACLE ["attributes, quote in unquoted value","<div class=a\"b>one</div><p>Hello</p><span title=\"t\">two</span>",[[0,"element","div {\"class\":\"a\\\"b\"}"],[1,"text","one"],[0,"element","p {}"],[1,"text","Hello"],[0,"element","span {\"title\":\"t\"}"],[1,"text","two"]]]
+(pass) build() > matches htmlparser2 :: attributes, quote in unquoted value
+ORACLE ["attributes, apostrophe in unquoted value","<a b=c'd e=f>x</a>",[[0,"element","a {\"b\":\"c'd\",\"e\":\"f\"}"],[1,"text","x"]]]
+(pass) build() > matches htmlparser2 :: attributes, apostrophe in unquoted value
+ORACLE ["attributes, leading equals","<a =b c>x</a>",[[0,"element","a {\"=b\":\"\",\"c\":\"\"}"],[1,"text","x"]]]
+(pass) build() > matches htmlparser2 :: attributes, leading equals
+ORACLE ["attributes, slash between","<a b = \"c\" / d>x</a>",[[0,"element","a {\"b\":\"c\",\"d\":\"\"}"],[1,"text","x"]]]
+(pass) build() > matches htmlparser2 :: attributes, slash between
+ORACLE ["attributes, quote after value","<a b=\"c\"d e>x</a>",[[0,"element","a {\"b\":\"c\",\"d\":\"\",\"e\":\"\"}"],[1,"text","x"]]]
+(pass) build() > matches htmlparser2 :: attributes, quote after value
+ORACLE ["attributes, empty unquoted","<a b= >x</a><a c=>y</a>",[[0,"element","a {\"b\":\"\"}"],[1,"text","x"],[0,"element","a {\"c\":\"\"}"],[1,"text","y"]]]
+(pass) build() > matches htmlparser2 :: attributes, empty unquoted
+ORACLE ["self-closing svg, unquoted slash","<svg><path d=M0/><path d=M1/></svg>",[[0,"element","svg {}"],[1,"element","path {\"d\":\"M0/\"}"],[2,"element","path {\"d\":\"M1/\"}"]]]
+(pass) build() > matches htmlparser2 :: self-closing svg, unquoted slash
+ORACLE ["self-closing svg, spaced slash","<svg><path d=M0 / ><path/></svg>",[[0,"element","svg {}"],[1,"element","path {\"d\":\"M0\"}"],[1,"element","path {}"]]]
+(pass) build() > matches htmlparser2 :: self-closing svg, spaced slash
+ORACLE ["self-closing svg, quoted slash","<svg><path d=\"M0/\"/><path/></svg>",[[0,"element","svg {}"],[1,"element","path {\"d\":\"M0/\"}"],[1,"element","path {}"]]]
+(pass) build() > matches htmlparser2 :: self-closing svg, quoted slash
+ORACLE ["self-closing html","<div/><span>x</span>",[[0,"element","div {}"],[1,"element","span {}"],[2,"text","x"]]]
+(pass) build() > matches htmlparser2 :: self-closing html
+ORACLE ["void elements","<p>a<br>b<img src=x>c<hr>d</p>",[[0,"element","p {}"],[1,"text","a"],[1,"element","br {}"],[1,"text","b"],[1,"element","img {\"src\":\"x\"}"],[1,"text","c"],[0,"element","hr {}"],[0,"text","d"],[0,"element","p {}"]]]
+(pass) build() > matches htmlparser2 :: void elements
+ORACLE ["implied p close","<p>one<p>two<div>three</div>",[[0,"element","p {}"],[1,"text","one"],[0,"element","p {}"],[1,"text","two"],[0,"element","div {}"],[1,"text","three"]]]
+(pass) build() > matches htmlparser2 :: implied p close
+ORACLE ["implied li close","<ul><li>a<li>b</ul>",[[0,"element","ul {}"],[1,"element","li {}"],[2,"text","a"],[1,"element","li {}"],[2,"text","b"]]]
+(pass) build() > matches htmlparser2 :: implied li close
+ORACLE ["implied table","<table><tr><td>a<td>b<tr><td>c</table>",[[0,"element","table {}"],[1,"element","tr {}"],[2,"element","td {}"],[3,"text","a"],[2,"element","td {}"],[3,"text","b"],[1,"element","tr {}"],[2,"element","td {}"],[3,"text","c"]]]
+(pass) build() > matches htmlparser2 :: implied table
+ORACLE ["implied option","<select><option>a<option>b<optgroup><option>c</select>",[[0,"element","select {}"],[1,"element","option {}"],[2,"text","a"],[1,"element","option {}"],[2,"text","b"],[1,"element","optgroup {}"],[2,"element","option {}"],[3,"text","c"]]]
+(pass) build() > matches htmlparser2 :: implied option
+ORACLE ["implied dd/dt","<dl><dt>a<dd>b<dt>c</dl>",[[0,"element","dl {}"],[1,"element","dt {}"],[2,"text","a"],[1,"element","dd {}"],[2,"text","b"],[1,"element","dt {}"],[2,"text","c"]]]
+(pass) build() > matches htmlparser2 :: implied dd/dt
+ORACLE ["implied heading","<h1>a<h2>b</h2>",[[0,"element","h1 {}"],[1,"text","a"],[0,"element","h2 {}"],[1,"text","b"]]]
+(pass) build() > matches htmlparser2 :: implied heading
+ORACLE ["implied a","<a href=1>one<a href=2>two</a>",[[0,"element","a {\"href\":\"1\"}"],[1,"text","one"],[0,"element","a {\"href\":\"2\"}"],[1,"text","two"]]]
+(pass) build() > matches htmlparser2 :: implied a
+ORACLE ["body closes head","<html><head><link rel=x><body>y</body>",[[0,"element","html {}"],[1,"element","head {}"],[2,"element","link {\"rel\":\"x\"}"],[1,"element","body {}"],[2,"text","y"]]]
+(pass) build() > matches htmlparser2 :: body closes head
+ORACLE ["stray close p","<div></p></div>",[[0,"element","div {}"],[1,"element","p {}"]]]
+(pass) build() > matches htmlparser2 :: stray close p
+ORACLE ["stray close br","<div></br></div>",[[0,"element","div {}"],[1,"element","br {}"]]]
+(pass) build() > matches htmlparser2 :: stray close br
+ORACLE ["stray close tag","<div></span>x</div>",[[0,"element","div {}"],[1,"text","x"]]]
+(pass) build() > matches htmlparser2 :: stray close tag
+ORACLE ["unclosed elements","<div><span>x",[[0,"element","div {}"],[1,"element","span {}"],[2,"text","x"]]]
+(pass) build() > matches htmlparser2 :: unclosed elements
+ORACLE ["misnested","<b><i>x</b>y</i>",[[0,"element","b {}"],[1,"element","i {}"],[2,"text","x"],[0,"text","y"]]]
+(pass) build() > matches htmlparser2 :: misnested
+ORACLE ["nested form","<form><form><input></form></form>",[[0,"element","form {}"],[1,"element","input {}"]]]
+(pass) build() > matches htmlparser2 :: nested form
+ORACLE ["comment","<!-- hi --><p>x</p>",[[0,"comment",""],[0,"element","p {}"],[1,"text","x"]]]
+(pass) build() > matches htmlparser2 :: comment
+ORACLE ["comment, unclosed","<p>x<!-- never",[[0,"element","p {}"],[1,"text","x"],[1,"comment",""]]]
+(pass) build() > matches htmlparser2 :: comment, unclosed
+ORACLE ["bogus comment","<p>x</ 3>y</p>",[[0,"element","p {}"],[1,"text","x"],[1,"comment",""],[1,"text","y"]]]
+(pass) build() > matches htmlparser2 :: bogus comment
+ORACLE ["processing instruction","<?xml version=1?><p>x</p>",[[0,"comment",""],[0,"element","p {}"],[1,"text","x"]]]
+(pass) build() > matches htmlparser2 :: processing instruction
+ORACLE ["directive","<!DOCTYPE html><p>x</p>",[[0,"directive",""],[0,"element","p {}"],[1,"text","x"]]]
+(pass) build() > matches htmlparser2 :: directive
+ORACLE ["script, raw","<script>if (a < b && c > d) document.write(\"<p>x</p>\")</script>",[[0,"element","script {}"],[1,"text","if (a < b && c > d) document.write(\"<p>x</p>\")"]]]
+(pass) build() > matches htmlparser2 :: script, raw
+ORACLE ["script, uppercase close","<script>x</SCRIPT>y",[[0,"element","script {}"],[1,"text","x"],[0,"text","y"]]]
+(pass) build() > matches htmlparser2 :: script, uppercase close
+ORACLE ["script, unclosed","<script>x<p>y",[[0,"element","script {}"],[1,"text","x<p>y"]]]
+(pass) build() > matches htmlparser2 :: script, unclosed [15.00ms]
+ORACLE ["style, raw","<style>a > b { content: '&amp;' }</style>",[[0,"element","style {}"],[1,"text","a > b { content: '&amp;' }"]]]
+(pass) build() > matches htmlparser2 :: style, raw
+ORACLE ["title, entities","<title>a &amp; b <i>c</i></title>",[[0,"element","title {}"],[1,"text","a & b <i>c</i>"]]]
+(pass) build() > matches htmlparser2 :: title, entities
+ORACLE ["textarea","<textarea><b>&lt;x&gt;</b></textarea>",[[0,"element","textarea {}"],[1,"text","<b><x></b>"]]]
+(pass) build() > matches htmlparser2 :: textarea
+ORACLE ["plaintext","<plaintext><b>x</b></plaintext>",[[0,"element","plaintext {}"],[1,"text","<b>x</b></plaintext>"]]]
+(pass) build() > matches htmlparser2 :: plaintext
+ORACLE ["noscript","<noscript><img src=x></noscript>",[[0,"element","noscript {}"],[1,"element","img {\"src\":\"x\"}"]]]
+(pass) build() > matches htmlparser2 :: noscript
+ORACLE ["lone <","<p>a < b and c <3 d</p>",[[0,"element","p {}"],[1,"text","a < b and c <3 d"]]]
+(pass) build() > matches htmlparser2 :: lone <
+ORACLE ["text entities","<p>&copy; &#169; &#xA9; &nbsp;&notanentity; &amp</p>",[[0,"element","p {}"],[1,"text","© © ©  ¬anentity; &"]]]
+(pass) build() > matches htmlparser2 :: text entities
+ORACLE ["svg names","<svg viewBox='0 0 1 1'><clipPath id=c><rect/></clipPath><foreignObject><div>x</div></foreignObject></svg>",[[0,"element","svg {\"viewbox\":\"0 0 1 1\"}"],[1,"element","clipPath {\"id\":\"c\"}"],[2,"element","rect {}"],[1,"element","foreignObject {}"],[2,"element","div {}"],[3,"text","x"]]]
+(pass) build() > matches htmlparser2 :: svg names
+ORACLE ["svg self-closing","<svg/><p>x</p>",[[0,"element","svg {}"],[0,"element","p {}"],[1,"text","x"]]]
+(pass) build() > matches htmlparser2 :: svg self-closing
+ORACLE ["svg title","<svg><title><b>x</b></title></svg>",[[0,"element","svg {}"],[1,"element","title {}"],[2,"element","b {}"],[3,"text","x"]]]
+(pass) build() > matches htmlparser2 :: svg title
+ORACLE ["math","<math><mi>x</mi><mo>+</mo></math>",[[0,"element","math {}"],[1,"element","mi {}"],[2,"text","x"],[1,"element","mo {}"],[2,"text","+"]]]
+(pass) build() > matches htmlparser2 :: math
+ORACLE ["image alias","<image src=x>",[[0,"element","img {\"src\":\"x\"}"]]]
+(pass) build() > matches htmlparser2 :: image alias
+ORACLE ["whitespace","\n  <div>\n\t<span> x </span>\n  </div>\n",[[0,"text","\n  "],[0,"element","div {}"],[1,"text","\n\t"],[1,"element","span {}"],[2,"text"," x "],[1,"text","\n  "],[0,"text","\n"]]]
+(pass) build() > matches htmlparser2 :: whitespace
+ORACLE ["bogus comments","<!x><!><!-x><![CDATA[x]]><?x?></ x>",[[0,"comment",""],[0,"comment",""],[0,"comment",""],[0,"comment",""],[0,"comment",""],[0,"comment",""]]]
+(pass) build() > matches htmlparser2 :: bogus comments
+ORACLE ["doctypes","<!doctype html><!DOCTYPE html><!DocType x>",[[0,"directive",""],[0,"directive",""],[0,"directive",""]]]
+(pass) build() > matches htmlparser2 :: doctypes
+ORACLE ["empty end tag","<p>a</>b</p>",[[0,"element","p {}"],[1,"text","ab"]]]
+(pass) build() > matches htmlparser2 :: empty end tag
+ORACLE ["cdata in svg","<svg><style><![CDATA[a&amp;<b>]]></style></svg>",[[0,"element","svg {}"],[1,"element","style {}"],[2,"text","a&amp;<b>"]]]
+(pass) build() > matches htmlparser2 :: cdata in svg
+ORACLE ["eof in start tag","<p>a<a href=\"x",[[0,"element","p {}"],[1,"text","a"]]]
+(pass) build() > matches htmlparser2 :: eof in start tag
+ORACLE ["eof in unquoted value","<p>a<a b=c",[[0,"element","p {}"],[1,"text","a"]]]
+(pass) build() > matches htmlparser2 :: eof in unquoted value
+ORACLE ["eof in attribute name","<p>a<a b",[[0,"element","p {}"],[1,"text","a"]]]
+(pass) build() > matches htmlparser2 :: eof in attribute name
+ORACLE ["eof in end tag","<p>a</p",[[0,"element","p {}"],[1,"text","a"]]]
+(pass) build() > matches htmlparser2 :: eof in end tag
+ORACLE ["eof after end tag open","<p>a</",[[0,"element","p {}"],[1,"text","a</"]]]
+(pass) build() > matches htmlparser2 :: eof after end tag open
+ORACLE ["eof after lone <","<p>a<",[[0,"element","p {}"],[1,"text","a<"]]]
+(pass) build() > matches htmlparser2 :: eof after lone <
+ORACLE ["eof in bogus comment","<p>a</ x",[[0,"element","p {}"],[1,"text","a"],[1,"comment",""]]]
+(pass) build() > matches htmlparser2 :: eof in bogus comment
+ORACLE ["eof in declaration","<p>a<!x",[[0,"element","p {}"],[1,"text","a"],[1,"comment",""]]]
+(pass) build() > matches htmlparser2 :: eof in declaration
+ORACLE ["eof in raw text end tag","<script>a</script",[[0,"element","script {}"],[1,"text","a</script"]]]
+(pass) build() > matches htmlparser2 :: eof in raw text end tag
+ORACLE ["eof in rcdata end tag","<title>a</title",[[0,"element","title {}"],[1,"text","a</title"]]]
+(pass) build() > matches htmlparser2 :: eof in rcdata end tag
+(pass) build() > drops unfinished tags like browsers :: <p>a<a/
+(pass) build() > drops unfinished tags like browsers :: <p>a</p x
+(pass) build() > drops unfinished tags like browsers :: <p>a</p 
+(pass) build() > drops unfinished tags like browsers :: <script>a</script x
+(pass) build() > drops unfinished tags like browsers :: <script>a</script/
+(pass) build() > drops unfinished tags like browsers :: <textarea>a</textarea 
+(pass) build() > comment, directive, and CDATA values follow browsers
+(pass) build() > element ranges point at their source
+(pass) build() > subtrees are contiguous
+
+ 84 pass
+ 0 fail
+ 792 expect() calls
+Ran 84 tests across 1 file. [72.00ms]

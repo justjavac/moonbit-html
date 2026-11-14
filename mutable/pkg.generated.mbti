@@ -1,0 +1,222 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "justjavac/html/mutable"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn parse(String) -> Document
+
+pub fn[T : Stringify] stringify(T) -> String
+
+// Errors
+pub suberror HtmlError {
+  InvalidSelector(String)
+  InvalidName(String)
+  InvalidInsertion(String)
+  InvalidValue(String)
+  NoParent
+}
+
+// Types and methods
+pub struct Comment {
+  // private fields
+}
+pub fn Comment::after(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Comment::before(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Comment::clone(Self) -> Self
+pub fn Comment::document(Self) -> Document
+pub fn Comment::end(Self) -> Int32?
+#deprecated
+pub fn Comment::equal(Self, Self) -> Bool
+#deprecated
+pub fn Comment::not_equal(Self, Self) -> Bool
+pub fn Comment::parent(Self) -> Parent?
+pub fn Comment::remove(Self) -> Unit
+pub fn Comment::replace(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Comment::set_value(Self, String) -> Unit raise HtmlError
+pub fn Comment::start(Self) -> Int32?
+pub fn Comment::stringify(Self) -> String
+#deprecated
+pub fn Comment::to_repr(Self) -> @debug.Repr
+pub fn Comment::value(Self) -> String
+pub impl Stringify for Comment
+pub impl Eq for Comment
+pub impl @debug.Debug for Comment
+
+pub(all) enum Content {
+  Node(Node)
+  Text(String)
+}
+
+pub struct Directive {
+  // private fields
+}
+pub fn Directive::after(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Directive::before(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Directive::clone(Self) -> Self
+pub fn Directive::document(Self) -> Document
+pub fn Directive::end(Self) -> Int32?
+#deprecated
+pub fn Directive::equal(Self, Self) -> Bool
+#deprecated
+pub fn Directive::not_equal(Self, Self) -> Bool
+pub fn Directive::parent(Self) -> Parent?
+pub fn Directive::remove(Self) -> Unit
+pub fn Directive::replace(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Directive::set_value(Self, String) -> Unit raise HtmlError
+pub fn Directive::start(Self) -> Int32?
+pub fn Directive::stringify(Self) -> String
+#deprecated
+pub fn Directive::to_repr(Self) -> @debug.Repr
+pub fn Directive::value(Self) -> String
+pub impl Stringify for Directive
+pub impl Eq for Directive
+pub impl @debug.Debug for Directive
+
+pub struct Document {
+  // private fields
+}
+pub fn Document::all(Self, String) -> Array[Element] raise HtmlError
+pub fn Document::append(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Document::children(Self) -> Array[Node]
+pub fn Document::end(Self) -> Int32
+#deprecated
+pub fn Document::equal(Self, Self) -> Bool
+pub fn Document::find(Self, String) -> Element? raise HtmlError
+#deprecated
+pub fn Document::not_equal(Self, Self) -> Bool
+pub fn Document::position(Self, Int32) -> Position
+pub fn Document::prepend(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Document::source(Self) -> String
+pub fn Document::start(Self) -> Int32
+pub fn Document::stringify(Self) -> String
+pub fn Document::text(Self) -> String
+#deprecated
+pub fn Document::to_repr(Self) -> @debug.Repr
+pub impl Stringify for Document
+pub impl Eq for Document
+pub impl @debug.Debug for Document
+
+pub struct Element {
+  // private fields
+}
+pub fn Element::after(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Element::all(Self, String) -> Array[Self] raise HtmlError
+pub fn Element::append(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Element::attributes(Self) -> Map[String, String]
+pub fn Element::before(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Element::children(Self) -> Array[Node]
+pub fn Element::clone(Self) -> Self
+pub fn Element::closest(Self, String) -> Self? raise HtmlError
+pub fn Element::document(Self) -> Document
+pub fn Element::end(Self) -> Int32?
+#deprecated
+pub fn Element::equal(Self, Self) -> Bool
+pub fn Element::find(Self, String) -> Self? raise HtmlError
+pub fn Element::get_attr(Self, String) -> String?
+pub fn Element::has_attr(Self, String) -> Bool
+pub fn Element::html(Self) -> String
+pub fn Element::matches(Self, String) -> Bool raise HtmlError
+pub fn Element::name(Self) -> String
+#deprecated
+pub fn Element::not_equal(Self, Self) -> Bool
+pub fn Element::parent(Self) -> Parent?
+pub fn Element::prepend(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Element::remove(Self) -> Unit
+pub fn Element::remove_attr(Self, String) -> Unit
+pub fn Element::replace(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Element::set_attr(Self, String, String) -> Unit raise HtmlError
+pub fn Element::set_html(Self, String) -> Unit raise HtmlError
+pub fn Element::set_name(Self, String) -> Unit raise HtmlError
+pub fn Element::set_text(Self, String) -> Unit raise HtmlError
+pub fn Element::start(Self) -> Int32?
+pub fn Element::stringify(Self) -> String
+pub fn Element::text(Self) -> String
+#deprecated
+pub fn Element::to_repr(Self) -> @debug.Repr
+pub impl Stringify for Element
+pub impl Eq for Element
+pub impl @debug.Debug for Element
+
+#derive(Eq, @debug.Debug)
+pub(all) enum Node {
+  Element(Element)
+  Text(Text)
+  Comment(Comment)
+  Directive(Directive)
+}
+pub fn Node::after(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Node::before(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Node::clone(Self) -> Self
+pub fn Node::document(Self) -> Document
+pub fn Node::end(Self) -> Int32?
+#deprecated
+pub fn Node::equal(Self, Self) -> Bool
+#deprecated
+pub fn Node::not_equal(Self, Self) -> Bool
+pub fn Node::parent(Self) -> Parent?
+pub fn Node::remove(Self) -> Unit
+pub fn Node::replace(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Node::start(Self) -> Int32?
+pub fn Node::stringify(Self) -> String
+#deprecated
+pub fn Node::to_repr(Self) -> @debug.Repr
+pub impl Stringify for Node
+
+#derive(Eq, @debug.Debug)
+pub(all) enum Parent {
+  Document(Document)
+  Element(Element)
+}
+#deprecated
+pub fn Parent::equal(Self, Self) -> Bool
+#deprecated
+pub fn Parent::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Parent::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct Position {
+  line : Int32
+  column : Int32
+}
+#deprecated
+pub fn Position::equal(Self, Self) -> Bool
+#deprecated
+pub fn Position::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Position::to_repr(Self) -> @debug.Repr
+
+pub struct Text {
+  // private fields
+}
+pub fn Text::after(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Text::before(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Text::clone(Self) -> Self
+pub fn Text::document(Self) -> Document
+pub fn Text::end(Self) -> Int32?
+#deprecated
+pub fn Text::equal(Self, Self) -> Bool
+#deprecated
+pub fn Text::not_equal(Self, Self) -> Bool
+pub fn Text::parent(Self) -> Parent?
+pub fn Text::remove(Self) -> Unit
+pub fn Text::replace(Self, Array[Content]) -> Unit raise HtmlError
+pub fn Text::set_value(Self, String) -> Unit
+pub fn Text::start(Self) -> Int32?
+pub fn Text::stringify(Self) -> String
+#deprecated
+pub fn Text::to_repr(Self) -> @debug.Repr
+pub fn Text::value(Self) -> String
+pub impl Stringify for Text
+pub impl Eq for Text
+pub impl @debug.Debug for Text
+
+// Type aliases
+
+// Traits
+pub trait Stringify {
+  fn stringify(Self) -> String
+}

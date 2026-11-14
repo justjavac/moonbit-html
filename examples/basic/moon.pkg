@@ -1,0 +1,6 @@
+import {
+  "justjavac/html",
+  "justjavac/html/mutable",
+}
+
+pkgtype(kind: "executable")

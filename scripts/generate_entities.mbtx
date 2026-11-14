@@ -1,0 +1,33 @@
+----
+import {
+  "moonbitlang/async@0.22.4",
+  "moonbitlang/async@0.22.4/fs",
+}
+----
+
+///|
+async fn main raise {
+  let input = "internal/entities_data.mbt"
+  let source = @fs.read_file(input).text()
+  let marker = "let packed_html_entities : String ="
+  let marker_at = match source.find(marker) {
+    Some(value) => value
+    None => fail("entity data marker not found")
+  }
+  let quote = match source[marker_at:].find("\"") {
+    Some(value) => marker_at + value
+    None => fail("entity data string not found")
+  }
+  let end = match source[quote + 1:].find("\"") {
+    Some(value) => quote + 1 + value
+    None => fail("entity data string is unterminated")
+  }
+  let data = source[quote + 1:end]
+  let output = StringBuilder()
+  output.write_string(
+    "// Generated from entities 8.1.0; see scripts/generate_entities.mbtx.\n\n///|\nlet packed_html_entities : String = \"",
+  )
+  output.write_view(data)
+  output.write_string("\"\n")
+  @fs.write_file("internal/entities_data.mbt", output.to_string(), create_mode=CreateOrTruncate)
+}

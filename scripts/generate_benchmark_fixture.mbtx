@@ -1,0 +1,26 @@
+----
+import {
+  "moonbitlang/async@0.22.4",
+  "moonbitlang/async@0.22.4/fs",
+}
+----
+
+///|
+async fn main raise {
+  let input = "benchmark/wikipedia.html"
+  let source = @fs.read_file(input).text()
+  @fs.write_file("benchmark/wikipedia.html", source, create_mode=CreateOrTruncate)
+  let output = StringBuilder()
+  output.write_string("///|\nlet wikipedia_html : String = [\n")
+  for line in source.split("\n") {
+    output.write_string("  ")
+    output.write_view(line.escape())
+    output.write_string(",\n")
+  }
+  output.write_string("].join(\"\\n\")\n")
+  @fs.write_file(
+    "benchmark/fixture.mbt",
+    output.to_string(),
+    create_mode=CreateOrTruncate,
+  )
+}

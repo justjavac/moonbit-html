@@ -1,0 +1,7 @@
+import {
+  "justjavac/html/internal",
+}
+
+import {
+  "justjavac/html",
+} for "test"

@@ -1,0 +1,133 @@
+bun test v1.3.11 (af24e281)
+
+src\select.test.ts:
+ORACLE ["*",[16,36,44,68,112,182,234,290,316,333,338,358,417,426,443,469,542,549,574,598,608,612,622,642,652,662,690,745,778,801,818,845,943,951]]
+(pass) select > matches css-select :: *
+ORACLE ["a",[338,358,469]]
+(pass) select > matches css-select :: a
+ORACLE ["A",[338,358,469]]
+(pass) select > matches css-select :: A
+ORACLE ["head > title",[44]]
+(pass) select > matches css-select :: head > title
+ORACLE ["head>title",[44]]
+(pass) select > matches css-select :: head>title
+ORACLE ["meta[name=description]",[68]]
+(pass) select > matches css-select :: meta[name=description]
+ORACLE ["meta[name=\"viewport\"]",[112]]
+(pass) select > matches css-select :: meta[name="viewport"]
+ORACLE ["link[rel=canonical]",[182]]
+(pass) select > matches css-select :: link[rel=canonical]
+ORACLE ["link[rel~=alternate]",[234]]
+(pass) select > matches css-select :: link[rel~=alternate]
+ORACLE ["html[lang|=en]",[16]]
+(pass) select > matches css-select :: html[lang|=en]
+ORACLE ["[lang|=en]",[16,690]]
+(pass) select > matches css-select :: [lang|=en]
+ORACLE ["a[href^=https]",[469]]
+(pass) select > matches css-select :: a[href^=https]
+ORACLE ["a[href$=\"/\"]",[338,358]]
+(pass) select > matches css-select :: a[href$="/"]
+ORACLE ["a[href*=other]",[469]]
+(pass) select > matches css-select :: a[href*=other]
+ORACLE ["[data-mixed=value i]",[690]]
+(pass) select > matches css-select :: [data-mixed=value i]
+ORACLE ["[data-mixed=Value]",[690]]
+(pass) select > matches css-select :: [data-mixed=Value]
+ORACLE ["[data-list~=b]",[690]]
+(pass) select > matches css-select :: [data-list~=b]
+ORACLE ["img[alt]",[549]]
+(pass) select > matches css-select :: img[alt]
+ORACLE ["img:not([alt])",[574]]
+(pass) select > matches css-select :: img:not([alt])
+ORACLE ["#top",[316]]
+(pass) select > matches css-select :: #top
+ORACLE ["#top a",[338,358]]
+(pass) select > matches css-select :: #top a
+ORACLE [".active",[358]]
+(pass) select > matches css-select :: .active
+ORACLE ["p.lead.intro",[443]]
+(pass) select > matches css-select :: p.lead.intro
+ORACLE [".lead, .active",[358,443]]
+(pass) select > matches css-select :: .lead, .active
+ORACLE ["body.home",[290]]
+(pass) select > matches css-select :: body.home
+ORACLE ["main > p",[443,542,598]]
+(pass) select > matches css-select :: main > p
+ORACLE ["main p",[443,542,598]]
+(pass) select > matches css-select :: main p
+ORACLE ["h1 + p",[443]]
+(pass) select > matches css-select :: h1 + p
+ORACLE ["h1 ~ p",[443,542,598]]
+(pass) select > matches css-select :: h1 ~ p
+ORACLE ["p + p",[542,598]]
+(pass) select > matches css-select :: p + p
+ORACLE ["li:first-child",[612]]
+(pass) select > matches css-select :: li:first-child
+ORACLE ["li:last-child",[662]]
+(pass) select > matches css-select :: li:last-child
+ORACLE ["li:nth-child(2n+1)",[612,642,662]]
+(pass) select > matches css-select :: li:nth-child(2n+1)
+ORACLE ["li:nth-child(odd)",[612,642,662]]
+(pass) select > matches css-select :: li:nth-child(odd)
+ORACLE ["li:nth-child(even)",[622,652]]
+(pass) select > matches css-select :: li:nth-child(even)
+ORACLE ["li:nth-child(3)",[642]]
+(pass) select > matches css-select :: li:nth-child(3)
+ORACLE ["li:nth-child(-n+2)",[612,622]]
+(pass) select > matches css-select :: li:nth-child(-n+2)
+ORACLE ["li:nth-last-child(2)",[652]]
+(pass) select > matches css-select :: li:nth-last-child(2)
+ORACLE ["li.x:nth-of-type(2)",[622]]
+(pass) select > matches css-select :: li.x:nth-of-type(2)
+ORACLE ["p:first-of-type",[443,951]]
+(pass) select > matches css-select :: p:first-of-type
+ORACLE ["p:last-of-type",[598,951]]
+(pass) select > matches css-select :: p:last-of-type
+ORACLE ["span:only-child",[745]]
+(pass) select > matches css-select :: span:only-child
+ORACLE ["p:empty",[598]]
+(pass) select > matches css-select :: p:empty
+ORACLE [":root",[16]]
+(pass) select > matches css-select :: :root
+ORACLE ["li:not(.x)",[612,642,652]]
+(pass) select > matches css-select :: li:not(.x)
+ORACLE ["li:not(:first-child):not(:last-child)",[622,642,652]]
+(pass) select > matches css-select :: li:not(:first-child):not(:last-child)
+ORACLE [":is(h1, footer p)",[426,951]]
+(pass) select > matches css-select :: :is(h1, footer p)
+ORACLE [":where(nav) a",[338,358]]
+(pass) select > matches css-select :: :where(nav) a
+ORACLE ["svg rect",[818]]
+(pass) select > matches css-select :: svg rect
+ORACLE ["ul > li.x + li",[642]]
+(pass) select > matches css-select :: ul > li.x + li
+ORACLE ["header a.active, main img[src$='.png']",[358,549,574]]
+(pass) select > matches css-select :: header a.active, main img[src$='.png']
+ORACLE ["template",[845]]
+(pass) select > matches css-select :: template
+ORACLE ["template p",[]]
+(pass) select > matches css-select :: template p
+ORACLE ["main .x",[622,662]]
+(pass) select > matches css-select :: main .x
+ORACLE ["p, li",[443,542,598,612,622,642,652,662,951]]
+(pass) select > matches css-select :: p, li
+(pass) select > scopes results to the root
+(pass) select > matches foreign tags by exact case, like browsers
+(pass) select > skips template contents, unless the template is the root
+(pass) select > stops at the limit
+(pass) select > supports escapes in identifiers and strings
+(pass) select > rejects an unterminated string
+(pass) select > ignores inherited object keys as attributes
+(pass) select > caches compiled selectors
+(pass) select > rejects invalid selector :: ""
+(pass) select > rejects invalid selector :: "a >"
+(pass) select > rejects invalid selector :: "[href"
+(pass) select > rejects invalid selector :: "a:hover"
+(pass) select > rejects invalid selector :: ":nth-child(x)"
+(pass) select > rejects invalid selector :: "a,,b"
+(pass) select > rejects invalid selector :: "'x'"
+
+ 70 pass
+ 0 fail
+ 78 expect() calls
+Ran 70 tests across 1 file. [81.00ms]

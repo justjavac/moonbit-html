@@ -1,0 +1,107 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MoonBit
+        if: ${{ matrix.os != 'windows-latest' }}
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s nightly
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Install MoonBit on Windows
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+          $env:MOONBIT_INSTALL_VERSION = "nightly"
+          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
+          "C:\Users\runneradmin\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+      - name: Bundle core for the experimental llvm backend
+        shell: bash
+        run: moon -C "$HOME/.moon/lib/core" bundle --warn-list -a --target llvm || true
+      - run: moon version --all
+      - name: Migrate the benchmark-only legacy dependency manifest
+        shell: bash
+        run: |
+          moon check --target native || {
+            test -d .mooncakes/Milky2018/html
+            cd .mooncakes/Milky2018/html
+            moon fmt
+          }
+      - run: moon fmt --check
+      - run: moon check --target all --deny-warn
+      - run: moon test --target all
+      - run: moon build --target all --release
+      - name: Coverage
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          moon test --target native --enable-coverage
+          moon coverage analyze -p justjavac/html -- -f cobertura -o coverage.xml
+      - uses: codecov/codecov-action@v5
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        with:
+          files: coverage.xml
+          disable_search: true
+
+  bench:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MoonBit
+        if: ${{ matrix.os != 'windows-latest' }}
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s nightly
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Install MoonBit on Windows
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+          $env:MOONBIT_INSTALL_VERSION = "nightly"
+          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
+          "C:\Users\runneradmin\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: moon version --all
+      - name: Migrate the benchmark-only legacy dependency manifest
+        shell: bash
+        run: |
+          moon check --target native || {
+            test -d .mooncakes/Milky2018/html
+            cd .mooncakes/Milky2018/html
+            moon fmt
+          }
+      - name: Bench
+        shell: bash
+        run: |
+          set -o pipefail
+          for target in native js wasm; do
+            echo "## ${{ matrix.os }} / ${target}" | tee -a results.md
+            echo "" >> results.md
+            if moon bench --target "$target" --release --frozen -p justjavac/html-benchmark 2>&1 | tee out.txt; then
+              echo '```' >> results.md
+              grep -E "bench .*(ok|FAILED)|ns ±|µs ±|ms ±| s ±|Total tests" out.txt >> results.md || true
+              echo '```' >> results.md
+            else
+              echo "_(target failed or unsupported)_" >> results.md
+            fi
+            echo "" >> results.md
+          done
+      - name: Summary
+        shell: bash
+        run: cat results.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bench-${{ matrix.os }}
+          path: results.md
