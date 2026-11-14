@@ -84,7 +84,7 @@ test "every svg alias keeps its camelCase form" {
   let names = @html.parse("<svg>" + source + "</svg>")
     .all("*")
     .map(element => element.name())
-  for alias in aliases {
-    assert_true(names.contains(alias))
+  for camel in aliases {
+    assert_true(names.contains(camel))
   }
 }
