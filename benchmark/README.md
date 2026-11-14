@@ -14,7 +14,7 @@ Compared versions:
 - `Milky2018/html` 0.1.2
 - `bobzhang/html_parser` 0.2.3
 
-Environment: MoonBit nightly toolchain, Node.js 22 for the JS backend, measured in GitHub Actions on ubuntu-latest, windows-latest, and macos-latest.
+Environment: MoonBit nightly toolchain (0.1.20261113), Node.js 22 for the JS backend, measured in GitHub Actions on ubuntu-latest, windows-latest, and macos-latest. The tables below are from the ubuntu-latest run; all three platforms are published as CI artifacts.
 
 These libraries do not implement identical tree-construction semantics. community and Milky2018 perform WHATWG document construction; bobzhang provides a larger parser/sanitizer toolkit; marianoguerra builds a semantic markup tree. The results compare the same input operation, not feature-equivalent implementations.
 
@@ -24,12 +24,12 @@ Mean time to parse the page and keep a result derived from its tree.
 
 | Implementation | native | JS | Wasm |
 | --- | ---: | ---: | ---: |
-| **justjavac/html** | **1.06 ms** | **0.381 ms** | **0.434 ms** |
-| justjavac/html mutable | 1.36 ms | 0.488 ms | 0.791 ms |
-| moonbit-community/html | 97.03 ms | 12.34 ms | 95.23 ms |
-| marianoguerra/html | 5.47 ms | 2.38 ms | 6.47 ms |
-| Milky2018/html | 96.63 ms | 6.18 ms | 92.47 ms |
-| bobzhang/html_parser | 6.26 ms | 4.58 ms | 47.17 ms |
+| **justjavac/html** | **188.72 µs** | **432.86 µs** | **524.73 µs** |
+| justjavac/html mutable | 603.16 µs | 561.25 µs | 1.11 ms |
+| moonbit-community/html | 87.69 ms | 22.41 ms | 114.33 ms |
+| marianoguerra/html | 2.49 ms | 3.41 ms | 7.79 ms |
+| Milky2018/html | 85.47 ms | 11.04 ms | 115.39 ms |
+| bobzhang/html_parser | 3.55 ms | 17.62 ms | 14.32 ms |
 
 ## Parse and stringify
 
@@ -37,12 +37,12 @@ Mean time to parse and serialize the complete document without edits.
 
 | Implementation | native | JS | Wasm |
 | --- | ---: | ---: | ---: |
-| **justjavac/html** | **1.10 ms** | **0.373 ms** | **0.432 ms** |
-| justjavac/html mutable | 1.46 ms | 0.506 ms | 0.755 ms |
-| moonbit-community/html | 98.39 ms | 13.33 ms | 97.16 ms |
-| marianoguerra/html | 7.54 ms | 4.33 ms | 7.62 ms |
-| Milky2018/html | 97.56 ms | 8.69 ms | 93.48 ms |
-| bobzhang/html_parser | 11.75 ms | 15.44 ms | 78.78 ms |
+| **justjavac/html** | **188.31 µs** | **438.83 µs** | **525.57 µs** |
+| justjavac/html mutable | 605.88 µs | 576.97 µs | 1.12 ms |
+| moonbit-community/html | 88.28 ms | 23.46 ms | 116.53 ms |
+| marianoguerra/html | 3.11 ms | 6.76 ms | 8.98 ms |
+| Milky2018/html | 86.34 ms | 13.10 ms | 113.42 ms |
+| bobzhang/html_parser | 6.36 ms | 27.93 ms | 23.71 ms |
 
 The immutable serializer is an original-source operation. Mutable mode materializes node states and therefore has different tradeoffs.
 
@@ -92,15 +92,17 @@ The final run also includes these immutable workloads:
 
 | Workload | native | JS | Wasm |
 | --- | ---: | ---: | ---: |
-| parse and read all attributes/text | 2.47 ms | 0.981 ms | 1.64 ms |
-| precompiled ordinary selectors | 18.61 µs | 10.32 µs | 24.91 µs |
-| structural selectors, 10 queries | 1.75 ms | 2.58 ms | 3.29 ms |
+| parse and read all attributes/text | 705.16 µs | 1.10 ms | 1.98 ms |
+| precompiled ordinary selectors | 10.52 µs | 13.46 µs | 31.45 µs |
+| structural selectors, 10 queries | 1.45 ms | 3.14 ms | 4.54 ms |
 
 ## Search implementation
 
 The parser used to ship a C stub (`find_native.c`) that searched single code units with runtime-detected AVX2, SSE2, and scalar fallbacks. It was added because the stable toolchain's Windows MSVC build of the core library's `StringView::find` was ~100× slower than its Linux build (505 µs vs 3.0 µs for a 64 Ki scan, measured in [mbt-indexof-bench](https://github.com/justjavac/mbt-indexof-bench)).
 
 The nightly toolchain fixed that regression, and its core find is SIMD-accelerated on both the native and wasm targets (2–7 µs per 64 Ki scan on all three operating systems). The C stub and all per-target search code were therefore removed: every backend now uses the same pure-MoonBit call to the core library. The full cross-backend, cross-platform evidence lives in [mbt-indexof-bench](https://github.com/justjavac/mbt-indexof-bench).
+
+The results above were measured after the removal: on the same Windows machine, native parse of this page dropped from 1.06 ms (stable toolchain with the C stub) to ~320 µs (nightly, pure MoonBit), and the ubuntu CI run above measures 188.72 µs — native is the fastest backend again.
 
 ## Reproduce
 
