@@ -15,7 +15,7 @@ version = "0.1.0"
 
 source = "src"
 
-readme = "src/README.mbt.md"
+readme = "README.mbt.md"
 
 repository = "https://github.com/justjavac/moonbit-html"
 
