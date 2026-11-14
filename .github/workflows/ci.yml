@@ -25,6 +25,7 @@ jobs:
       - name: Fetch dependencies and migrate the legacy manifest
         shell: bash
         run: |
+          moon update
           moon check --target native || {
             test -d .mooncakes/Milky2018/html
             cd .mooncakes/Milky2018/html
@@ -83,6 +84,7 @@ jobs:
       - name: Fetch dependencies and migrate the legacy manifest
         shell: bash
         run: |
+          moon update
           moon check --target native || {
             test -d .mooncakes/Milky2018/html
             cd .mooncakes/Milky2018/html
