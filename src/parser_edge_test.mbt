@@ -62,3 +62,32 @@ test "empty raw text elements stay empty" {
   assert_eq(doc.find("textarea").unwrap().text(), "")
   assert_eq(doc.find("title").unwrap().text(), "")
 }
+
+///|
+test "tbody closes an open thead" {
+  let doc = @html.parse("<table><thead>a<tbody>b</table>")
+  assert_eq(doc.find("thead").unwrap().text(), "a")
+  assert_eq(doc.find("tbody").unwrap().text(), "b")
+}
+
+///|
+test "every svg alias keeps its camelCase form" {
+  let aliases = [
+    "altGlyphDef", "altGlyphItem", "animateColor", "animateMotion", "animateTransform",
+    "clipPath", "feColorMatrix", "feComponentTransfer", "feComposite", "feConvolveMatrix",
+    "feDiffuseLighting", "feDisplacementMap", "feDistantLight", "feDropShadow",
+    "feFlood", "feFuncA", "feFuncB", "feFuncG", "feFuncR", "feGaussianBlur",
+    "feImage", "feMerge", "feMergeNode", "feMorphology", "feOffset", "fePointLight",
+    "feSpecularLighting", "feSpotLight", "feTile", "feTurbulence", "linearGradient",
+    "textPath", "foreignObject",
+  ]
+  let source = aliases
+    .map(name => "<\{name.to_lower()}></\{name}>")
+    .join("")
+  let names = @html.parse("<svg>" + source + "</svg>")
+    .all("*")
+    .map(element => element.name())
+  for alias in aliases {
+    assert_true(names.contains(alias))
+  }
+}

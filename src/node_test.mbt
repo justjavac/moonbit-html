@@ -80,3 +80,38 @@ test "top-level leaf nodes have the document as parent" {
   guard p.children() is [Comment(inner), ..] else { abort("unexpected children") }
   assert_eq(inner.parent(), @html.Parent::Element(p))
 }
+
+///|
+test "the node enum delegates element methods" {
+  let doc = @html.parse("<div><p>a</p></div>")
+  let div = doc.find("div").unwrap()
+  guard doc.children() is [child] else { abort("expected one child") }
+  assert_eq(child.document(), doc)
+  assert_eq(child.start(), div.start())
+  assert_eq(child.end(), div.end())
+  assert_eq(child.parent(), @html.Parent::Document(doc))
+  assert_eq(child.stringify(), "<div><p>a</p></div>")
+}
+
+///|
+test "the node enum reads a text node's parent" {
+  let doc = @html.parse("<p>hello</p>")
+  let p = doc.find("p").unwrap()
+  guard p.children() is [child] else { abort("expected one child") }
+  assert_eq(child.parent(), @html.Parent::Element(p))
+}
+
+///|
+test "the node enum reads a comment node's parent" {
+  let doc = @html.parse("<p><!--x--></p>")
+  let p = doc.find("p").unwrap()
+  guard p.children() is [child] else { abort("expected one child") }
+  assert_eq(child.parent(), @html.Parent::Element(p))
+}
+
+///|
+test "the node enum reads a directive node's parent" {
+  let doc = @html.parse("<!doctype html><p>x</p>")
+  guard doc.children() is [child, ..] else { abort("expected a directive") }
+  assert_eq(child.parent(), @html.Parent::Document(doc))
+}

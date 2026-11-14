@@ -79,3 +79,14 @@ test "the selector cache evicts when full" {
   }
   assert_eq(doc.all(".c0").length(), 1)
 }
+
+///|
+test "nth with a non-numeric step is rejected" {
+  assert_true(invalid("p:nth-child(xn)"))
+}
+
+///|
+test "an empty includes value never matches" {
+  let doc = @html.parse("<p class=\"a b\">x</p>")
+  assert_eq(doc.all("[class~=\"\"]").length(), 0)
+}

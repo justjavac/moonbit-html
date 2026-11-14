@@ -33,3 +33,30 @@ test "entities decode inside attribute values" {
   // In attributes a legacy entity followed by alphanumerics stays literal.
   assert_eq(doc.find("a").unwrap().get_attr("title"), Some("& A &notit;"))
 }
+
+///|
+test "near-miss entities stay literal and exercise trie miss paths" {
+  let doc = @html.parse(
+    "<p>&amacr</p><p>&a1;</p><p>&az;</p><p>&ija;</p><p>&ijlix;</p><p>&fjligx;</p><p>&ngEx;</p><p>&nlEx;</p>",
+  )
+  let texts = doc.all("p").map(element => element.text())
+  assert_eq(
+    texts,
+    [
+      "&amacr", "&a1;", "&az;", "&ija;", "&ijlix;", "&fjligx;", "&ngEx;", "&nlEx;",
+    ],
+  )
+}
+
+///|
+test "a legacy prefix match survives a failed continuation" {
+  let doc = @html.parse("<p>&notj;</p>")
+  assert_eq(doc.find("p").unwrap().text(), "\u{ac}j;")
+}
+
+///|
+test "multi-unit and astral entity values decode" {
+  let doc = @html.parse("<p>&nLt;</p><p>&Afr;</p>")
+  let texts = doc.all("p").map(element => element.text())
+  assert_eq(texts, ["\u{226a}\u{20d2}", "\u{1d504}"])
+}
