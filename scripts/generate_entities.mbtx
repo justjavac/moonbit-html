@@ -7,7 +7,7 @@ import {
 
 ///|
 async fn main raise {
-  let input = "internal/entities_data.mbt"
+  let input = "src/internal/entities_data.mbt"
   let source = @fs.read_file(input).text()
   let marker = "let packed_html_entities : String ="
   let marker_at = match source.find(marker) {
@@ -29,5 +29,5 @@ async fn main raise {
   )
   output.write_view(data)
   output.write_string("\"\n")
-  @fs.write_file("internal/entities_data.mbt", output.to_string(), create_mode=CreateOrTruncate)
+  @fs.write_file("src/internal/entities_data.mbt", output.to_string(), create_mode=CreateOrTruncate)
 }

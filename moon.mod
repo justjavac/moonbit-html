@@ -13,7 +13,9 @@ name = "justjavac/html"
 
 version = "0.1.0"
 
-readme = "README.mbt.md"
+source = "src"
+
+readme = "src/README.mbt.md"
 
 repository = "https://github.com/justjavac/moonbit-html"
 

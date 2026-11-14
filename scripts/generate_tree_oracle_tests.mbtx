@@ -37,7 +37,7 @@ async fn main raise {
     }
   }
   output.write_string("]\n")
-  @fs.write_file("internal/tree_oracle_data_wbtest.mbt", output.to_string(), create_mode=CreateOrTruncate)
+  @fs.write_file("src/internal/tree_oracle_data_wbtest.mbt", output.to_string(), create_mode=CreateOrTruncate)
   let selector_log = @fs.read_file("scripts/oracles/selector.log").text()
   let selectors = StringBuilder()
   selectors.write_string("///|\nlet selector_oracles : Array[(String, Array[Int])] = [\n")
@@ -58,5 +58,5 @@ async fn main raise {
     }
   }
   selectors.write_string("]\n")
-  @fs.write_file("selector_oracle_data_test.mbt", selectors.to_string(), create_mode=CreateOrTruncate)
+  @fs.write_file("src/selector_oracle_data_test.mbt", selectors.to_string(), create_mode=CreateOrTruncate)
 }
