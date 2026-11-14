@@ -4,7 +4,7 @@
 
 All implementations parse the same 157,021-byte Wikipedia page from `bobzhang/html_parser`'s JustHTML fixture corpus. The generated MoonBit string is shared before timing starts. `it.keep` consumes every result.
 
-Measurements use `moon bench --release`, with mean times from the runner. Each timing is one complete operation on the page, not an amortized batch time.
+Measurements use `moon bench --release`; each reported time is the runner's mean for one complete operation on the page, not an amortized batch time. Parenthesized multipliers are relative to `justjavac/html` on the same backend.
 
 Compared versions:
 
@@ -16,7 +16,7 @@ Compared versions:
 
 Environment: MoonBit nightly toolchain (0.1.20261113), Node.js 22 for the JS backend, measured in GitHub Actions on ubuntu-latest, windows-latest, and macos-latest. The tables below are from the ubuntu-latest run; all three platforms are published as CI artifacts.
 
-These libraries do not implement identical tree-construction semantics. community and Milky2018 perform WHATWG document construction; bobzhang provides a larger parser/sanitizer toolkit; marianoguerra builds a semantic markup tree. The results compare the same input operation, not feature-equivalent implementations.
+These libraries do not implement identical tree-construction semantics: `moonbit-community/html` and `Milky2018/html` perform WHATWG document construction, `bobzhang/html_parser` is a larger parser/sanitizer toolkit, and `marianoguerra/html` builds a semantic markup tree. The tables compare the same input operation, not feature-equivalent implementations.
 
 ## Parse
 
@@ -25,11 +25,11 @@ Mean time to parse the page and keep a result derived from its tree.
 | Implementation | native | JS | Wasm |
 | --- | ---: | ---: | ---: |
 | **justjavac/html** | **188.72 µs** | **432.86 µs** | **524.73 µs** |
-| justjavac/html mutable | 603.16 µs | 561.25 µs | 1.11 ms |
-| moonbit-community/html | 87.69 ms | 22.41 ms | 114.33 ms |
-| marianoguerra/html | 2.49 ms | 3.41 ms | 7.79 ms |
-| Milky2018/html | 85.47 ms | 11.04 ms | 115.39 ms |
-| bobzhang/html_parser | 3.55 ms | 17.62 ms | 14.32 ms |
+| justjavac/html mutable | 603.16 µs (3.2×) | 561.25 µs (1.3×) | 1.11 ms (2.1×) |
+| moonbit-community/html | 87.69 ms (465×) | 22.41 ms (52×) | 114.33 ms (218×) |
+| marianoguerra/html | 2.49 ms (13×) | 3.41 ms (7.9×) | 7.79 ms (15×) |
+| Milky2018/html | 85.47 ms (453×) | 11.04 ms (26×) | 115.39 ms (220×) |
+| bobzhang/html_parser | 3.55 ms (19×) | 17.62 ms (41×) | 14.32 ms (27×) |
 
 ## Parse and stringify
 
@@ -38,13 +38,25 @@ Mean time to parse and serialize the complete document without edits.
 | Implementation | native | JS | Wasm |
 | --- | ---: | ---: | ---: |
 | **justjavac/html** | **188.31 µs** | **438.83 µs** | **525.57 µs** |
-| justjavac/html mutable | 605.88 µs | 576.97 µs | 1.12 ms |
-| moonbit-community/html | 88.28 ms | 23.46 ms | 116.53 ms |
-| marianoguerra/html | 3.11 ms | 6.76 ms | 8.98 ms |
-| Milky2018/html | 86.34 ms | 13.10 ms | 113.42 ms |
-| bobzhang/html_parser | 6.36 ms | 27.93 ms | 23.71 ms |
+| justjavac/html mutable | 605.88 µs (3.2×) | 576.97 µs (1.3×) | 1.12 ms (2.1×) |
+| moonbit-community/html | 88.28 ms (469×) | 23.46 ms (53×) | 116.53 ms (222×) |
+| marianoguerra/html | 3.11 ms (17×) | 6.76 ms (15×) | 8.98 ms (17×) |
+| Milky2018/html | 86.34 ms (459×) | 13.10 ms (30×) | 113.42 ms (216×) |
+| bobzhang/html_parser | 6.36 ms (34×) | 27.93 ms (64×) | 23.71 ms (45×) |
 
-The immutable serializer is an original-source operation. Mutable mode materializes node states and therefore has different tradeoffs.
+The immutable serializer copies directly from the original source, while mutable mode materializes node states — the two modes have different tradeoffs.
+
+## Read and query workloads
+
+Additional `justjavac/html` workloads from the same run:
+
+| Workload | native | JS | Wasm |
+| --- | ---: | ---: | ---: |
+| parse and read all attributes/text | 705.16 µs | 1.10 ms | 1.98 ms |
+| precompiled ordinary selectors | 10.52 µs | 13.46 µs | 31.45 µs |
+| structural selectors, 10 queries | 1.45 ms | 3.14 ms | 4.54 ms |
+| ordinary selectors, mutable | 50.33 µs | 139.00 µs | 148.38 µs |
+| structural selectors, mutable, 10 queries | 1.13 ms | 2.22 ms | 5.81 ms |
 
 ## Optimization comparison
 
@@ -87,14 +99,6 @@ The retained optimizations are:
 - Single-code-unit searches delegate to the core library's `StringView::find` on every target; see "Search implementation" below.
 
 Two experiments without stable gains were reverted: replacing checked array writes with `unsafe_set`, and replacing the foreign-content `Bool?` with an integer state.
-
-The final run also includes these immutable workloads:
-
-| Workload | native | JS | Wasm |
-| --- | ---: | ---: | ---: |
-| parse and read all attributes/text | 705.16 µs | 1.10 ms | 1.98 ms |
-| precompiled ordinary selectors | 10.52 µs | 13.46 µs | 31.45 µs |
-| structural selectors, 10 queries | 1.45 ms | 3.14 ms | 4.54 ms |
 
 ## Search implementation
 
