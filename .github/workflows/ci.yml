@@ -11,12 +11,31 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install MoonBit
+      - name: Install MoonBit stable for dependency resolution
+        if: ${{ matrix.os != 'windows-latest' }}
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Install MoonBit stable on Windows for dependency resolution
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
+          "C:\Users\runneradmin\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+      - name: Fetch dependencies and migrate the legacy manifest
+        shell: bash
+        run: |
+          moon check --target native || {
+            test -d .mooncakes/Milky2018/html
+            cd .mooncakes/Milky2018/html
+            moon fmt
+          }
+      - name: Install MoonBit nightly
         if: ${{ matrix.os != 'windows-latest' }}
         run: |
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s nightly
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
-      - name: Install MoonBit on Windows
+      - name: Install MoonBit nightly on Windows
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
           Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
@@ -27,22 +46,14 @@ jobs:
         shell: bash
         run: moon -C "$HOME/.moon/lib/core" bundle --warn-list -a --target llvm || true
       - run: moon version --all
-      - name: Migrate the benchmark-only legacy dependency manifest
-        shell: bash
-        run: |
-          moon check --target native || {
-            test -d .mooncakes/Milky2018/html
-            cd .mooncakes/Milky2018/html
-            moon fmt
-          }
       - run: moon fmt --check
-      - run: moon check --target all --deny-warn
-      - run: moon test --target all
-      - run: moon build --target all --release
+      - run: moon check --target all --deny-warn --frozen
+      - run: moon test --target all --frozen
+      - run: moon build --target all --release --frozen
       - name: Coverage
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
-          moon test --target native --enable-coverage
+          moon test --target native --enable-coverage --frozen
           moon coverage analyze -p justjavac/html -- -f cobertura -o coverage.xml
       - uses: codecov/codecov-action@v5
         if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -58,12 +69,31 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install MoonBit
+      - name: Install MoonBit stable for dependency resolution
+        if: ${{ matrix.os != 'windows-latest' }}
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Install MoonBit stable on Windows for dependency resolution
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
+          "C:\Users\runneradmin\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+      - name: Fetch dependencies and migrate the legacy manifest
+        shell: bash
+        run: |
+          moon check --target native || {
+            test -d .mooncakes/Milky2018/html
+            cd .mooncakes/Milky2018/html
+            moon fmt
+          }
+      - name: Install MoonBit nightly
         if: ${{ matrix.os != 'windows-latest' }}
         run: |
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s nightly
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
-      - name: Install MoonBit on Windows
+      - name: Install MoonBit nightly on Windows
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
           Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
@@ -74,14 +104,6 @@ jobs:
         with:
           node-version: 22
       - run: moon version --all
-      - name: Migrate the benchmark-only legacy dependency manifest
-        shell: bash
-        run: |
-          moon check --target native || {
-            test -d .mooncakes/Milky2018/html
-            cd .mooncakes/Milky2018/html
-            moon fmt
-          }
       - name: Bench
         shell: bash
         run: |
