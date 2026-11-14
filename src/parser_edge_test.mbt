@@ -75,15 +75,12 @@ test "every svg alias keeps its camelCase form" {
   let aliases = [
     "altGlyphDef", "altGlyphItem", "animateColor", "animateMotion", "animateTransform",
     "clipPath", "feColorMatrix", "feComponentTransfer", "feComposite", "feConvolveMatrix",
-    "feDiffuseLighting", "feDisplacementMap", "feDistantLight", "feDropShadow",
-    "feFlood", "feFuncA", "feFuncB", "feFuncG", "feFuncR", "feGaussianBlur",
-    "feImage", "feMerge", "feMergeNode", "feMorphology", "feOffset", "fePointLight",
-    "feSpecularLighting", "feSpotLight", "feTile", "feTurbulence", "linearGradient",
-    "textPath", "foreignObject",
+    "feDiffuseLighting", "feDisplacementMap", "feDistantLight", "feDropShadow", "feFlood",
+    "feFuncA", "feFuncB", "feFuncG", "feFuncR", "feGaussianBlur", "feImage", "feMerge",
+    "feMergeNode", "feMorphology", "feOffset", "fePointLight", "feSpecularLighting",
+    "feSpotLight", "feTile", "feTurbulence", "linearGradient", "textPath", "foreignObject",
   ]
-  let source = aliases
-    .map(name => "<\{name.to_lower()}></\{name}>")
-    .join("")
+  let source = aliases.map(name => "<\{name.to_lower()}></\{name}>").join("")
   let names = @html.parse("<svg>" + source + "</svg>")
     .all("*")
     .map(element => element.name())

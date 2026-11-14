@@ -4,7 +4,8 @@ test "generic stringify works on every node kind" {
   assert_eq(@mutable.stringify(doc), "<!doctype html>\n<p>a<!--x--></p>")
   let p = doc.find("p").unwrap()
   assert_eq(@mutable.stringify(p), "<p>a<!--x--></p>")
-  guard p.children() is [@mutable.Node::Text(text), @mutable.Node::Comment(comment)] else {
+  guard p.children()
+    is [@mutable.Node::Text(text), @mutable.Node::Comment(comment)] else {
     abort("unexpected children")
   }
   assert_eq(@mutable.stringify(text), "a")
@@ -20,7 +21,12 @@ test "leaf handles compare by identity" {
   let doc = @mutable.parse("a<!--x--><!doctype html><p>b</p>")
   let other = @mutable.parse("a<!--x--><!doctype html><p>b</p>")
   guard doc.children()
-    is [@mutable.Node::Text(text_a), @mutable.Node::Comment(comment), @mutable.Node::Directive(directive), @mutable.Node::Element(p)] else {
+    is [
+      @mutable.Node::Text(text_a),
+      @mutable.Node::Comment(comment),
+      @mutable.Node::Directive(directive),
+      @mutable.Node::Element(p),
+    ] else {
     abort("unexpected children")
   }
   guard p.children() is [@mutable.Node::Text(text_b)] else {
@@ -31,7 +37,12 @@ test "leaf handles compare by identity" {
   assert_eq(directive, directive)
   assert_false(text_a == text_b)
   guard other.children()
-    is [@mutable.Node::Text(other_text), @mutable.Node::Comment(other_comment), @mutable.Node::Directive(other_directive), ..] else {
+    is [
+      @mutable.Node::Text(other_text),
+      @mutable.Node::Comment(other_comment),
+      @mutable.Node::Directive(other_directive),
+      ..,
+    ] else {
     abort("unexpected children")
   }
   assert_false(text_a == other_text)
@@ -42,27 +53,44 @@ test "leaf handles compare by identity" {
 ///|
 test "debug representations name every node kind" {
   let doc = @mutable.parse("<!doctype html><p>a<!--x--></p>")
-  debug_inspect(doc, content=(
-    #|"Document"
-  ))
-  guard doc.children() is [@mutable.Node::Directive(directive), @mutable.Node::Element(p)] else {
+  debug_inspect(
+    doc,
+    content=(
+      #|"Document"
+    ),
+  )
+  guard doc.children()
+    is [@mutable.Node::Directive(directive), @mutable.Node::Element(p)] else {
     abort("unexpected children")
   }
-  debug_inspect(directive, content=(
-    #|"Directive(doctype html)"
-  ))
-  debug_inspect(p, content=(
-    #|"Element(p)"
-  ))
-  guard p.children() is [@mutable.Node::Text(text), @mutable.Node::Comment(comment)] else {
+  debug_inspect(
+    directive,
+    content=(
+      #|"Directive(doctype html)"
+    ),
+  )
+  debug_inspect(
+    p,
+    content=(
+      #|"Element(p)"
+    ),
+  )
+  guard p.children()
+    is [@mutable.Node::Text(text), @mutable.Node::Comment(comment)] else {
     abort("unexpected children")
   }
-  debug_inspect(text, content=(
-    #|"Text(a)"
-  ))
-  debug_inspect(comment, content=(
-    #|"Comment(x)"
-  ))
+  debug_inspect(
+    text,
+    content=(
+      #|"Text(a)"
+    ),
+  )
+  debug_inspect(
+    comment,
+    content=(
+      #|"Comment(x)"
+    ),
+  )
 }
 
 ///|
@@ -78,8 +106,8 @@ test "closest walks up to the nearest matching ancestor" {
 ///|
 test "position binary search finds early lines" {
   let doc = @mutable.parse("<p>a</p>\n<p>b</p>\n<p>c</p>\n<p>d</p>")
-  assert_eq(doc.position(1), { line: 1, column: 2 })
-  assert_eq(doc.position(10), { line: 2, column: 2 })
+  assert_eq(doc.position(1), { line: 1, column: 2, })
+  assert_eq(doc.position(10), { line: 2, column: 2, })
 }
 
 ///|
@@ -171,7 +199,8 @@ test "directive nodes support reads and edits" {
 ///|
 test "node delegates to the wrapped leaf state" {
   let doc = @mutable.parse("<p>a</p><!--c-->")
-  guard doc.children() is [@mutable.Node::Element(p), @mutable.Node::Comment(comment)] else {
+  guard doc.children()
+    is [@mutable.Node::Element(p), @mutable.Node::Comment(comment)] else {
     abort("unexpected children")
   }
   let node = @mutable.Node::Comment(comment)

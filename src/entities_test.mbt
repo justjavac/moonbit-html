@@ -3,10 +3,7 @@ test "named entities decode through the packed trie" {
   let doc = @html.parse(
     "<p>&amp; &lt;&gt; &nbsp; &angst; &fjlig; &ThickSpace;</p>",
   )
-  assert_eq(
-    doc.text(),
-    "& <> \u{a0} \u{c5} fj \u{205f}\u{200a}",
-  )
+  assert_eq(doc.text(), "& <> \u{a0} \u{c5} fj \u{205f}\u{200a}")
 }
 
 ///|
@@ -20,7 +17,10 @@ test "legacy entities without semicolons use the longest match" {
 test "numeric entities handle decimal, hex, and bad input" {
   assert_eq(@html.parse("<p>&#65;&#x41;</p>").text(), "AA")
   assert_eq(@html.parse("<p>&#xD800; &#0;</p>").text(), "\u{fffd} \u{fffd}")
-  assert_eq(@html.parse("<p>&#x110000;&#99999999;</p>").text(), "\u{fffd}\u{fffd}")
+  assert_eq(
+    @html.parse("<p>&#x110000;&#99999999;</p>").text(),
+    "\u{fffd}\u{fffd}",
+  )
   assert_eq(@html.parse("<p>&#xFFFFFFFFF;</p>").text(), "\u{fffd}")
   assert_eq(@html.parse("<p>&#150;</p>").text(), "\u{2013}")
   // No digits means the text stays as written.
@@ -40,12 +40,9 @@ test "near-miss entities stay literal and exercise trie miss paths" {
     "<p>&amacr</p><p>&a1;</p><p>&az;</p><p>&ija;</p><p>&ijlix;</p><p>&fjligx;</p><p>&ngEx;</p><p>&nlEx;</p>",
   )
   let texts = doc.all("p").map(element => element.text())
-  assert_eq(
-    texts,
-    [
-      "&amacr", "&a1;", "&az;", "&ija;", "&ijlix;", "&fjligx;", "&ngEx;", "&nlEx;",
-    ],
-  )
+  assert_eq(texts, [
+    "&amacr", "&a1;", "&az;", "&ija;", "&ijlix;", "&fjligx;", "&ngEx;", "&nlEx;",
+  ])
 }
 
 ///|

@@ -12,7 +12,12 @@ test "leaf handles compare by identity" {
   assert_eq(directive, directive)
   assert_false(text_a == text_b)
   guard other.children()
-    is [Text(other_text), Comment(other_comment), Directive(other_directive), ..] else {
+    is [
+      Text(other_text),
+      Comment(other_comment),
+      Directive(other_directive),
+      ..,
+    ] else {
     abort("unexpected children")
   }
   assert_false(text_a == other_text)
@@ -23,24 +28,40 @@ test "leaf handles compare by identity" {
 ///|
 test "debug representations name every node kind" {
   let doc = @html.parse("<!doctype html>\nt<!--x--><p>a</p>")
-  debug_inspect(doc, content=(
-    #|"Document(offsets=0..33)"
-  ))
-  guard doc.children() is [Directive(directive), Text(text), Comment(comment), Element(p)] else {
+  debug_inspect(
+    doc,
+    content=(
+      #|"Document(offsets=0..33)"
+    ),
+  )
+  guard doc.children()
+    is [Directive(directive), Text(text), Comment(comment), Element(p)] else {
     abort("unexpected children")
   }
-  debug_inspect(directive, content=(
-    #|"Directive(doctype html)"
-  ))
-  debug_inspect(text, content=(
-    #|"Text(\nt)"
-  ))
-  debug_inspect(comment, content=(
-    #|"Comment(x)"
-  ))
-  debug_inspect(p, content=(
-    #|"Element(p, offsets=25..33)"
-  ))
+  debug_inspect(
+    directive,
+    content=(
+      #|"Directive(doctype html)"
+    ),
+  )
+  debug_inspect(
+    text,
+    content=(
+      #|"Text(\nt)"
+    ),
+  )
+  debug_inspect(
+    comment,
+    content=(
+      #|"Comment(x)"
+    ),
+  )
+  debug_inspect(
+    p,
+    content=(
+      #|"Element(p, offsets=25..33)"
+    ),
+  )
 }
 
 ///|
@@ -77,7 +98,9 @@ test "top-level leaf nodes have the document as parent" {
   assert_eq(comment.parent(), @html.Parent::Document(doc))
   let nested = @html.parse("<p><!--x-->a</p>")
   let p = nested.find("p").unwrap()
-  guard p.children() is [Comment(inner), ..] else { abort("unexpected children") }
+  guard p.children() is [Comment(inner), ..] else {
+    abort("unexpected children")
+  }
   assert_eq(inner.parent(), @html.Parent::Element(p))
 }
 
