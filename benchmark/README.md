@@ -8,7 +8,7 @@ Measurements use `moon bench --release`; each reported time is the runner's mean
 
 Compared versions:
 
-- `justjavac/html` 0.1.2 (this module)
+- `justjavac/html` 0.1.3 (this module)
 - `moonbit-community/html` 0.2.4
 - `bobzhang/html_parser` 0.2.3
 
