@@ -27,4 +27,4 @@ preferred_target = "native"
 
 supported_targets = "+all"
 
-description = "The fastest MoonBit HTML parser: ~190 µs for a 157 KB page on native, 19–460x faster than other MoonBit parsers. Lossless, with source offsets, CSS selectors, and an optional mutable tree"
+description = "The fastest MoonBit HTML parser: ~240 µs for a 157 KB page on native, 20–440x faster than other MoonBit parsers. Lossless, with source offsets, CSS selectors, and an optional mutable tree"

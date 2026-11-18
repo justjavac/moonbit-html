@@ -14,7 +14,7 @@ Compared versions:
 
 `marianoguerra/html` and `Milky2018/html` were part of the comparison until their published releases were left behind by the toolchain: nightly no longer accepts their legacy JSON manifests. Their upstream repositories have already migrated, so they return as soon as new versions are published.
 
-Environment: MoonBit nightly toolchain (0.1.20261113), Node.js 22 for the JS backend, measured in GitHub Actions on ubuntu-latest, windows-latest, and macos-latest. The tables below are from the ubuntu-latest run; all three platforms are published as CI artifacts.
+Environment: MoonBit nightly toolchain (0.1.20261118), Node.js 22 for the JS backend, measured in GitHub Actions on ubuntu-latest, windows-latest, and macos-latest. The tables below are from the ubuntu-latest run; all three platforms are published as CI artifacts.
 
 These libraries do not implement identical tree-construction semantics: `moonbit-community/html` performs WHATWG document construction and `bobzhang/html_parser` is a larger parser/sanitizer toolkit. The tables compare the same input operation, not feature-equivalent implementations.
 
@@ -24,10 +24,10 @@ Mean time to parse the page and keep a result derived from its tree.
 
 | Implementation | native | JS | Wasm |
 | --- | ---: | ---: | ---: |
-| **justjavac/html** | **188.72 µs** | **432.86 µs** | **524.73 µs** |
-| justjavac/html mutable | 603.16 µs (3.2×) | 561.25 µs (1.3×) | 1.11 ms (2.1×) |
-| moonbit-community/html | 87.69 ms (465×) | 22.41 ms (52×) | 114.33 ms (218×) |
-| bobzhang/html_parser | 3.55 ms (19×) | 17.62 ms (41×) | 14.32 ms (27×) |
+| **justjavac/html** | **236.17 µs** | **614.22 µs** | **636.16 µs** |
+| justjavac/html mutable | 707.37 µs (3.0×) | 765.52 µs (1.2×) | 1.30 ms (2.0×) |
+| moonbit-community/html | 104.39 ms (442×) | 32.01 ms (52×) | 139.58 ms (219×) |
+| bobzhang/html_parser | 4.67 ms (20×) | 24.18 ms (39×) | 26.25 ms (41×) |
 
 ## Parse and stringify
 
@@ -35,10 +35,10 @@ Mean time to parse and serialize the complete document without edits.
 
 | Implementation | native | JS | Wasm |
 | --- | ---: | ---: | ---: |
-| **justjavac/html** | **188.31 µs** | **438.83 µs** | **525.57 µs** |
-| justjavac/html mutable | 605.88 µs (3.2×) | 576.97 µs (1.3×) | 1.12 ms (2.1×) |
-| moonbit-community/html | 88.28 ms (469×) | 23.46 ms (53×) | 116.53 ms (222×) |
-| bobzhang/html_parser | 6.36 ms (34×) | 27.93 ms (64×) | 23.71 ms (45×) |
+| **justjavac/html** | **237.46 µs** | **612.13 µs** | **664.31 µs** |
+| justjavac/html mutable | 702.64 µs (3.0×) | 772.80 µs (1.3×) | 1.30 ms (2.0×) |
+| moonbit-community/html | 105.26 ms (443×) | 32.60 ms (53×) | 139.94 ms (211×) |
+| bobzhang/html_parser | 8.21 ms (35×) | 37.57 ms (61×) | 30.48 ms (46×) |
 
 The immutable serializer copies directly from the original source, while mutable mode materializes node states — the two modes have different tradeoffs.
 
@@ -48,11 +48,11 @@ Additional `justjavac/html` workloads from the same run:
 
 | Workload | native | JS | Wasm |
 | --- | ---: | ---: | ---: |
-| parse and read all attributes/text | 705.16 µs | 1.10 ms | 1.98 ms |
-| precompiled ordinary selectors | 10.52 µs | 13.46 µs | 31.45 µs |
-| structural selectors, 10 queries | 1.45 ms | 3.14 ms | 4.54 ms |
-| ordinary selectors, mutable | 50.33 µs | 139.00 µs | 148.38 µs |
-| structural selectors, mutable, 10 queries | 1.13 ms | 2.22 ms | 5.81 ms |
+| parse and read all attributes/text | 938.36 µs | 1.62 ms | 2.46 ms |
+| precompiled ordinary selectors | 12.99 µs | 16.91 µs | 38.51 µs |
+| structural selectors, 10 queries | 1.71 ms | 3.82 ms | 5.59 ms |
+| ordinary selectors, mutable | 75.00 µs | 191.38 µs | 188.84 µs |
+| structural selectors, mutable, 10 queries | 1.42 ms | 2.75 ms | 6.87 ms |
 
 ## Optimization comparison
 
@@ -102,7 +102,7 @@ The parser used to ship a C stub (`find_native.c`) that searched single code uni
 
 The nightly toolchain fixed that regression, and its core find is SIMD-accelerated on both the native and wasm targets (2–7 µs per 64 Ki scan on all three operating systems). The C stub and all per-target search code were therefore removed: every backend now uses the same pure-MoonBit call to the core library. The full cross-backend, cross-platform evidence lives in [mbt-indexof-bench](https://github.com/justjavac/mbt-indexof-bench).
 
-The results above were measured after the removal: on the same Windows machine, native parse of this page dropped from 1.06 ms (stable toolchain with the C stub) to ~320 µs (nightly, pure MoonBit), and the ubuntu CI run above measures 188.72 µs — native is the fastest backend again.
+The results above were measured after the removal: on the same Windows machine, native parse of this page dropped from 1.06 ms (stable toolchain with the C stub) to ~320 µs (nightly, pure MoonBit), and the ubuntu CI run above measures 236.17 µs — native is the fastest backend again.
 
 ## Reproduce
 

@@ -12,7 +12,7 @@
 - **Targeted selectors:** candidate tag lists are precomputed at compilation; mutable queries visit only elements and skip subtrees that cannot match.
 - **Zero-copy reads:** hot loops use unchecked code-unit access where bounds are already guaranteed, and clean text spans are copied with one bounded substring write.
 
-On a 157 KB Wikipedia page, `justjavac/html` parses in about **190 µs natively** — roughly **19× faster** than the next-fastest MoonBit parser and over **460× faster** than the WHATWG-conforming one — and it is also the fastest on the JS and Wasm backends. The library is 100% MoonBit, with no C code. Detailed numbers, methodology, and the optimization log live in [`benchmark/README.md`](benchmark/README.md).
+On a 157 KB Wikipedia page, `justjavac/html` parses in about **240 µs natively** — roughly **20× faster** than the next-fastest MoonBit parser and over **440× faster** than the WHATWG-conforming one — and it is also the fastest on the JS and Wasm backends. The library is 100% MoonBit, with no C code. Detailed numbers, methodology, and the optimization log live in [`benchmark/README.md`](benchmark/README.md).
 
 ## Install
 

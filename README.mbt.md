@@ -6,7 +6,7 @@ Fast, lossless HTML parsing with UTF-16 source offsets, lazy entity decoding, CS
 
 ## Performance
 
-The fastest MoonBit HTML parser on every backend: parsing a 157 KB Wikipedia page takes **~190 µs on native** — 19× faster than the next-fastest MoonBit parser and 460×+ faster than the WHATWG-conforming one — with precompiled selector queries in ~10 µs. Numbers and methodology: [`benchmark/README.md`](benchmark/README.md).
+The fastest MoonBit HTML parser on every backend: parsing a 157 KB Wikipedia page takes **~240 µs on native** — 20× faster than the next-fastest MoonBit parser and 440×+ faster than the WHATWG-conforming one — with precompiled selector queries in ~13 µs. Numbers and methodology: [`benchmark/README.md`](benchmark/README.md).
 
 ## Install
 
