@@ -88,10 +88,6 @@ pub(all) enum Combinator {
   NextSibling
   SubsequentSibling
 }
-#deprecated
-pub fn Combinator::equal(Self, Self) -> Bool
-#deprecated
-pub fn Combinator::not_equal(Self, Self) -> Bool
 
 pub struct Complex {
   compounds : Array[Compound]
@@ -115,12 +111,6 @@ pub(all) enum Kind {
   Comment
   Directive
 }
-#deprecated
-pub fn Kind::equal(Self, Self) -> Bool
-#deprecated
-pub fn Kind::not_equal(Self, Self) -> Bool
-#deprecated
-pub fn Kind::to_repr(Self) -> @debug.Repr
 
 #derive(Eq)
 pub(all) enum Operator {
@@ -132,10 +122,6 @@ pub(all) enum Operator {
   Suffix
   Substring
 }
-#deprecated
-pub fn Operator::equal(Self, Self) -> Bool
-#deprecated
-pub fn Operator::not_equal(Self, Self) -> Bool
 
 pub(all) enum Pseudo {
   Root
