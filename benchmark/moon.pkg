@@ -2,9 +2,6 @@ import {
   "justjavac/html",
   "justjavac/html/mutable",
   "moonbit-community/html" @community,
-  "marianoguerra/html" @mariano,
-  "marianoguerra/html/write" @mariano_write,
-  "Milky2018/html/src" @milky,
   "bobzhang/html_parser" @bob,
   "moonbitlang/core/bench",
 }

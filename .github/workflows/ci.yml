@@ -23,15 +23,8 @@ jobs:
           $env:MOONBIT_INSTALL_VERSION = "nightly"
           irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
           "C:\Users\runneradmin\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
-      - name: Fetch dependencies and migrate the legacy manifest
-        shell: bash
-        run: |
-          moon update
-          moon check --target native || {
-            test -d .mooncakes/Milky2018/html
-            (cd .mooncakes/Milky2018/html && moon fmt)
-            moon check --target native
-          }
+      - name: Fetch dependencies
+        run: moon update
       - name: Bundle core for the experimental llvm backend
         shell: bash
         run: moon -C "$HOME/.moon/lib/core" bundle --warn-list -a --target llvm || true
@@ -71,15 +64,8 @@ jobs:
           $env:MOONBIT_INSTALL_VERSION = "nightly"
           irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
           "C:\Users\runneradmin\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
-      - name: Fetch dependencies and migrate the legacy manifest
-        shell: bash
-        run: |
-          moon update
-          moon check --target native || {
-            test -d .mooncakes/Milky2018/html
-            (cd .mooncakes/Milky2018/html && moon fmt)
-            moon check --target native
-          }
+      - name: Fetch dependencies
+        run: moon update
       - uses: actions/setup-node@v4
         with:
           node-version: 22

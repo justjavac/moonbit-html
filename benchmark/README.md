@@ -8,15 +8,15 @@ Measurements use `moon bench --release`; each reported time is the runner's mean
 
 Compared versions:
 
-- `justjavac/html` 0.1.0 (this module)
+- `justjavac/html` 0.1.1 (this module)
 - `moonbit-community/html` 0.2.4
-- `marianoguerra/html` 0.1.2
-- `Milky2018/html` 0.1.2
 - `bobzhang/html_parser` 0.2.3
+
+`marianoguerra/html` and `Milky2018/html` were part of the comparison until their published releases were left behind by the toolchain: nightly no longer accepts their legacy JSON manifests. Their upstream repositories have already migrated, so they return as soon as new versions are published.
 
 Environment: MoonBit nightly toolchain (0.1.20261113), Node.js 22 for the JS backend, measured in GitHub Actions on ubuntu-latest, windows-latest, and macos-latest. The tables below are from the ubuntu-latest run; all three platforms are published as CI artifacts.
 
-These libraries do not implement identical tree-construction semantics: `moonbit-community/html` and `Milky2018/html` perform WHATWG document construction, `bobzhang/html_parser` is a larger parser/sanitizer toolkit, and `marianoguerra/html` builds a semantic markup tree. The tables compare the same input operation, not feature-equivalent implementations.
+These libraries do not implement identical tree-construction semantics: `moonbit-community/html` performs WHATWG document construction and `bobzhang/html_parser` is a larger parser/sanitizer toolkit. The tables compare the same input operation, not feature-equivalent implementations.
 
 ## Parse
 
@@ -27,8 +27,6 @@ Mean time to parse the page and keep a result derived from its tree.
 | **justjavac/html** | **188.72 µs** | **432.86 µs** | **524.73 µs** |
 | justjavac/html mutable | 603.16 µs (3.2×) | 561.25 µs (1.3×) | 1.11 ms (2.1×) |
 | moonbit-community/html | 87.69 ms (465×) | 22.41 ms (52×) | 114.33 ms (218×) |
-| marianoguerra/html | 2.49 ms (13×) | 3.41 ms (7.9×) | 7.79 ms (15×) |
-| Milky2018/html | 85.47 ms (453×) | 11.04 ms (26×) | 115.39 ms (220×) |
 | bobzhang/html_parser | 3.55 ms (19×) | 17.62 ms (41×) | 14.32 ms (27×) |
 
 ## Parse and stringify
@@ -40,8 +38,6 @@ Mean time to parse and serialize the complete document without edits.
 | **justjavac/html** | **188.31 µs** | **438.83 µs** | **525.57 µs** |
 | justjavac/html mutable | 605.88 µs (3.2×) | 576.97 µs (1.3×) | 1.12 ms (2.1×) |
 | moonbit-community/html | 88.28 ms (469×) | 23.46 ms (53×) | 116.53 ms (222×) |
-| marianoguerra/html | 3.11 ms (17×) | 6.76 ms (15×) | 8.98 ms (17×) |
-| Milky2018/html | 86.34 ms (459×) | 13.10 ms (30×) | 113.42 ms (216×) |
 | bobzhang/html_parser | 6.36 ms (34×) | 27.93 ms (64×) | 23.71 ms (45×) |
 
 The immutable serializer copies directly from the original source, while mutable mode materializes node states — the two modes have different tradeoffs.
@@ -117,8 +113,6 @@ moon bench --target native --release -p justjavac/html-benchmark
 moon bench --target js --release -p justjavac/html-benchmark
 moon bench --target wasm --release -p justjavac/html-benchmark
 ```
-
-`Milky2018/html@0.1.2` still publishes legacy JSON manifests. With the 2026-11 toolchain, after MoonBit downloads it, run `moon fmt` in `.mooncakes/Milky2018/html` once, then use `--frozen` for subsequent commands. This is a dependency packaging issue, not a benchmark workaround.
 
 `wikipedia.html` is the readable fixture; `fixture.mbt` is generated from it by `scripts/generate_benchmark_fixture.mbtx` so every backend receives identical input without file I/O in the timed region.
 

@@ -23,24 +23,6 @@ test "parse / moonbit-community/html" (it : @bench.T) {
 }
 
 ///|
-test "parse / marianoguerra/html" (it : @bench.T) {
-  it.bench(fn() {
-    let doc = @mariano.parse(wikipedia_html) catch {
-      _ => abort("HTML operation failed")
-    }
-    it.keep(doc.document().children.length())
-  })
-}
-
-///|
-test "parse / Milky2018/html" (it : @bench.T) {
-  it.bench(fn() {
-    let doc = @milky.parse(wikipedia_html)
-    it.keep(doc.nodes.length())
-  })
-}
-
-///|
 test "parse / bobzhang/html_parser" (it : @bench.T) {
   it.bench(fn() {
     let doc = @bob.parse(wikipedia_html) catch {
@@ -70,26 +52,6 @@ test "parse+stringify / justjavac/html mutable" (it : @bench.T) {
 test "parse+stringify / moonbit-community/html" (it : @bench.T) {
   it.bench(fn() {
     let doc = @community.parse(wikipedia_html)
-    it.keep(doc.to_html().length())
-  })
-}
-
-///|
-test "parse+stringify / marianoguerra/html" (it : @bench.T) {
-  it.bench(fn() {
-    let doc = @mariano.parse(wikipedia_html) catch {
-      _ => abort("HTML operation failed")
-    }
-    it.keep(
-      @mariano.to_html(doc.document(), style=@mariano_write.Minified).length(),
-    )
-  })
-}
-
-///|
-test "parse+stringify / Milky2018/html" (it : @bench.T) {
-  it.bench(fn() {
-    let doc = @milky.parse(wikipedia_html)
     it.keep(doc.to_html().length())
   })
 }
