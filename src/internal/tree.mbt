@@ -307,6 +307,13 @@ pub fn foreign(tree : Tree, id : Int32) -> Bool {
 }
 
 ///|
+/// Whether the open element named `open` matches the end tag `name`,
+/// ASCII case-insensitively, so `</foreignobject>` closes `<foreignObject>`.
+fn same_tag(open : String, name : String) -> Bool {
+  open == name || open.equal_ignore_ascii_case(name)
+}
+
+///|
 /// Parse `source` into a compact tree.
 pub fn build(source : String, foreign~ : Bool = false) -> Tree {
   let builder = Builder::new(source, foreign)
@@ -390,10 +397,7 @@ pub fn build(source : String, foreign~ : Bool = false) -> Tree {
         j += 1
       }
       let (interned, interned_flags) = tag_info(source, lt + 2, j)
-      let mut name = interned
-      if builder.alien {
-        name = svg_name(name)
-      }
+      let name = interned
       if (interned_flags & IS_VOID) != 0 {
         if name == "br" {
           let _ = builder.add(
@@ -409,7 +413,7 @@ pub fn build(source : String, foreign~ : Bool = false) -> Tree {
         continue
       }
       let mut pos = builder.stack.length() - 1
-      while pos > 0 && builder.tree.name[builder.stack[pos]] != name {
+      while pos > 0 && !same_tag(builder.tree.name[builder.stack[pos]], name) {
         pos -= 1
       }
       if pos > 0 {

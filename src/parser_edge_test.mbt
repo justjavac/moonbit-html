@@ -23,6 +23,15 @@ test "svg tag names keep their camelCase forms" {
 }
 
 ///|
+test "lowercase end tag closes a renamed foreign integration point" {
+  let doc = @html.parse(
+    "<svg><foreignobject><p>x</p></foreignobject><circle/></svg>",
+  )
+  assert_true(doc.find("svg > circle") is Some(_))
+  assert_eq(doc.find("foreignObject > circle"), None)
+}
+
+///|
 test "a greater-than sign inside a quoted value does not end the tag" {
   let doc = @html.parse("<a href=\"x>y\">link</a>")
   let a = doc.find("a").unwrap()
