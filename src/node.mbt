@@ -1,4 +1,5 @@
 ///|
+/// Shared per-document state: the parse tree, a lazy line table, and an identity used by `Eq`.
 priv struct Context {
   tree : @internal.Tree
   mut lines : Array[Int32]?
@@ -6,9 +7,11 @@ priv struct Context {
 }
 
 ///|
+/// Monotonic source of document identities.
 let context_counter : Ref[Int32] = { val: 0, }
 
 ///|
+/// Create shared context for a freshly parsed tree.
 fn Context::new(tree : @internal.Tree) -> Context {
   context_counter.val += 1
   { tree, lines: None, identity: context_counter.val, }
@@ -16,40 +19,66 @@ fn Context::new(tree : @internal.Tree) -> Context {
 
 ///|
 /// An HTML document produced by `parse`.
+///
+/// The document owns the compact parse tree; every handle obtained from it
+/// (`Element`, `Text`, `Comment`, `Directive`) is a cheap view that stores no
+/// content of its own. Attribute maps, decoded text, and the line table are
+/// computed lazily on first read.
+///
+/// ```mbt nocheck
+/// let doc = @html.parse("<p>Hello &amp; goodbye</p>")
+/// doc.find("p").unwrap().text() // "Hello & goodbye"
+/// ```
 pub struct Document {
   priv ctx : Context
 }
 
 ///|
-/// An element handle. Handles are cheap views into the document's compact tree.
+/// A handle to an element node in a `Document`.
+///
+/// Handles are cheap views into the document's compact tree: copying one
+/// costs nothing, and two handles compare equal (`Eq`) exactly when they point
+/// at the same node of the same document. Offsets returned by `start` and
+/// `end` are zero-based UTF-16 code-unit offsets into the original source.
 pub struct Element {
   priv ctx : Context
   priv id : Int32
 }
 
 ///|
-/// A text node, including foreign-content CDATA sections.
+/// A handle to a text node, including foreign-content CDATA sections.
+///
+/// `value` returns the entity-decoded content, while `stringify` returns the
+/// exact original source slice.
 pub struct Text {
   priv ctx : Context
   priv id : Int32
 }
 
 ///|
-/// A normal or bogus comment.
+/// A handle to a normal or bogus comment node.
+///
+/// `value` returns the comment content without the `<!--` and `-->` markers.
 pub struct Comment {
   priv ctx : Context
   priv id : Int32
 }
 
 ///|
-/// A doctype declaration.
+/// A handle to a doctype declaration.
+///
+/// `value` returns the raw content of the declaration, e.g. `doctype html`
+/// for `<!doctype html>`.
 pub struct Directive {
   priv ctx : Context
   priv id : Int32
 }
 
 ///|
-/// A child node in an HTML document.
+/// A child node in an HTML document: an element, text, comment, or directive.
+///
+/// Returned by `children`. All node kinds share the `document`, `start`,
+/// `end`, `parent`, and `stringify` methods.
 #derive(Eq, Debug)
 pub(all) enum Node {
   Element(Element)
@@ -59,7 +88,7 @@ pub(all) enum Node {
 }
 
 ///|
-/// The parent of a top-level or nested node.
+/// The parent of a node: either the document or an enclosing element.
 #derive(Eq, Debug)
 pub(all) enum Parent {
   Document(Document)
@@ -68,6 +97,9 @@ pub(all) enum Parent {
 
 ///|
 /// A one-based line and column in the original UTF-16 source.
+///
+/// Both `line` and `column` start at 1. Columns count UTF-16 code units, not
+/// Unicode scalar values or grapheme clusters.
 #derive(Eq, Debug)
 pub(all) struct Position {
   line : Int32
@@ -75,29 +107,49 @@ pub(all) struct Position {
 }
 
 ///|
-/// A compiled CSS selector list.
+/// A CSS selector list compiled by `Selector::parse`.
+///
+/// Compiling once and reusing the value with `find_with`, `all_with`,
+/// `matches_with`, and `closest_with` skips re-parsing the selector text on
+/// every query and enables precomputed candidate-tag lookups.
 pub struct Selector {
   priv compiled : @internal.Selector
 }
 
 ///|
 /// A malformed or unsupported CSS selector.
+///
+/// Raised by the selector-taking functions (`find`, `all`, `matches`,
+/// `closest`, and `Selector::parse`); the message describes the first syntax
+/// problem found.
 pub suberror SelectorError {
   InvalidSelector(String)
 }
 
 ///|
-/// Values that can be serialized back to their exact original HTML source.
+/// Values that can be serialized back to HTML.
+///
+/// For nodes of an immutable document the result is always the exact original
+/// source slice, so `parse(source).stringify() == source`.
 pub trait Stringify {
   fn stringify(Self) -> String
 }
 
 ///|
+/// Serialize any `Stringify` value to its HTML string.
+///
+/// Equivalent to calling the value's own `stringify` method; useful when the
+/// concrete node type is abstracted away.
+///
+/// ```mbt nocheck
+/// @html.stringify(@html.parse("<p>a</p>")) // "<p>a</p>"
+/// ```
 pub fn[T : Stringify] stringify(target : T) -> String {
   target.stringify()
 }
 
 ///|
+/// Compile selector text, remapping the internal error type to `SelectorError`.
 fn compile_selector(input : String) -> @internal.Selector raise SelectorError {
   @internal.compile(input) catch {
     @internal.SelectorSyntax::Message(message) =>
@@ -106,7 +158,15 @@ fn compile_selector(input : String) -> @internal.Selector raise SelectorError {
 }
 
 ///|
-/// Compile a selector once for repeated matching.
+/// Compile a CSS selector list once for repeated matching.
+///
+/// Raises `SelectorError` for a malformed or unsupported selector. Use the
+/// result with `find_with`, `all_with`, `matches_with`, or `closest_with`.
+///
+/// ```mbt nocheck
+/// let content = @html.Selector::parse("div.content").unwrap()
+/// doc.find_with(content) // like doc.find("div.content"), without re-parsing
+/// ```
 pub fn Selector::parse(input : String) -> Selector raise SelectorError {
   { compiled: compile_selector(input), }
 }
@@ -162,6 +222,7 @@ pub impl Debug for Directive with fn to_repr(self) {
 }
 
 ///|
+/// Wrap a tree node id as a `Node` of the matching kind.
 fn wrap(ctx : Context, id : Int32) -> Node {
   match ctx.tree.kind[id] {
     Element => Node::Element({ ctx, id, })
@@ -173,11 +234,13 @@ fn wrap(ctx : Context, id : Int32) -> Node {
 }
 
 ///|
+/// Wrap a tree node id as an `Element` handle.
 fn element(ctx : Context, id : Int32) -> Element {
   { ctx, id, }
 }
 
 ///|
+/// Collect the direct children of a tree node as wrapped `Node`s.
 fn children(ctx : Context, id : Int32) -> Array[Node] {
   let output : Array[Node] = []
   let mut current = id + 1
@@ -189,6 +252,7 @@ fn children(ctx : Context, id : Int32) -> Array[Node] {
 }
 
 ///|
+/// Compile `selector` and return the first match under `id`, or `None`.
 fn find_one(
   ctx : Context,
   id : Int32,
@@ -204,6 +268,7 @@ fn find_one(
 }
 
 ///|
+/// Compile `selector` and return every match under `id` in source order.
 fn find_all(
   ctx : Context,
   id : Int32,
@@ -215,42 +280,62 @@ fn find_all(
 }
 
 ///|
-/// Parse HTML without raising on malformed markup. Recovery follows htmlparser2,
-/// not the WHATWG browser tree-construction algorithm.
+/// Parse HTML into an immutable document.
+///
+/// Never raises: malformed markup is recovered htmlparser2-style (implied end
+/// tags, foreign content, and bogus comments are handled leniently), which is
+/// not the WHATWG browser tree-construction algorithm. Do not use the result
+/// as a security boundary, e.g. as an HTML sanitizer.
+///
+/// ```mbt nocheck
+/// let doc = @html.parse("<ul><li>one<li>two</ul>")
+/// doc.all("li").length() // 2
+/// ```
 pub fn parse(source : String) -> Document {
   { ctx: Context::new(@internal.build(source)), }
 }
 
 ///|
-/// The exact source from which this document was parsed.
+/// The exact source string the document was parsed from.
 pub fn Document::source(self : Document) -> String {
   self.ctx.tree.source
 }
 
 ///|
+/// The start of the document's range: always `0`.
 pub fn Document::start(_self : Document) -> Int32 {
   0
 }
 
 ///|
+/// The end of the document's range: the source length in UTF-16 code units.
 pub fn Document::end(self : Document) -> Int32 {
   self.ctx.tree.source.length()
 }
 
 ///|
 /// The decoded text of all text nodes in document order.
+///
+/// Entities are decoded on the fly; tags, comments, and directives contribute
+/// nothing.
 pub fn Document::text(self : Document) -> String {
   @internal.text(self.ctx.tree, 0)
 }
 
 ///|
-/// Top-level nodes in source order.
+/// The document's top-level nodes in source order.
 pub fn Document::children(self : Document) -> Array[Node] {
   children(self.ctx, 0)
 }
 
 ///|
-/// Find the first matching element, or return `None`.
+/// The first element matching `selector` in source order, or `None`.
+///
+/// Raises `SelectorError` for a malformed or unsupported selector.
+///
+/// ```mbt nocheck
+/// doc.find("main > p.intro")
+/// ```
 pub fn Document::find(
   self : Document,
   selector : String,
@@ -259,7 +344,9 @@ pub fn Document::find(
 }
 
 ///|
-/// Find all matching elements in source order.
+/// All elements matching `selector` in source order.
+///
+/// Raises `SelectorError` for a malformed or unsupported selector.
 pub fn Document::all(
   self : Document,
   selector : String,
@@ -268,7 +355,8 @@ pub fn Document::all(
 }
 
 ///|
-/// Find the first element using a selector compiled by `Selector::parse`.
+/// The first element matching a selector compiled by `Selector::parse`, or
+/// `None`.
 pub fn Document::find_with(self : Document, selector : Selector) -> Element? {
   let found = @internal.all(self.ctx.tree, 0, selector.compiled, limit=1)
   if found.is_empty() {
@@ -279,7 +367,7 @@ pub fn Document::find_with(self : Document, selector : Selector) -> Element? {
 }
 
 ///|
-/// Find all elements using a selector compiled by `Selector::parse`.
+/// All elements matching a selector compiled by `Selector::parse`.
 pub fn Document::all_with(
   self : Document,
   selector : Selector,
@@ -290,7 +378,9 @@ pub fn Document::all_with(
 }
 
 ///|
-/// Convert a UTF-16 source offset to a one-based line and column.
+/// Convert a zero-based UTF-16 source offset to a one-based `Position`.
+///
+/// The line table is built on the first call and cached on the document.
 pub fn Document::position(self : Document, offset : Int32) -> Position {
   if self.ctx.lines is None {
     let lines : Array[Int32] = []
@@ -324,26 +414,38 @@ pub impl Stringify for Document with fn stringify(self) {
 }
 
 ///|
+/// The tag name.
+///
+/// HTML element names are lowercase; foreign-content (SVG/MathML) names keep
+/// their canonical camelCase form, e.g. `foreignObject`.
 pub fn Element::name(self : Element) -> String {
   self.ctx.tree.name[self.id]
 }
 
 ///|
+/// The document this element belongs to.
 pub fn Element::document(self : Element) -> Document {
   { ctx: self.ctx, }
 }
 
 ///|
+/// The zero-based UTF-16 offset at which the element's open tag starts.
 pub fn Element::start(self : Element) -> Int32 {
   self.ctx.tree.start[self.id]
 }
 
 ///|
+/// The zero-based UTF-16 offset just past the element.
+///
+/// For void elements this is the end of the open tag; for all others it is
+/// just past the close tag, so `source[start..end]` spans the whole element.
 pub fn Element::end(self : Element) -> Int32 {
   self.ctx.tree.end[self.id]
 }
 
 ///|
+/// The element's parent: an enclosing element, or the document for top-level
+/// elements.
 pub fn Element::parent(self : Element) -> Parent {
   let parent = self.ctx.tree.parent[self.id]
   if parent == 0 {
@@ -354,35 +456,46 @@ pub fn Element::parent(self : Element) -> Parent {
 }
 
 ///|
+/// The element's child nodes in source order.
 pub fn Element::children(self : Element) -> Array[Node] {
   children(self.ctx, self.id)
 }
 
 ///|
-/// Return an independent map of lowercase attribute names and decoded values.
+/// An independent map of the element's attributes.
+///
+/// Keys are lowercase and values are entity-decoded. The returned map is a
+/// copy: mutating it does not affect the document.
 pub fn Element::attributes(self : Element) -> Map[String, String] {
   @internal.attributes(self.ctx.tree, self.id).copy()
 }
 
 ///|
-/// Read an attribute without distinguishing its ASCII letter case.
+/// The decoded value of an attribute, matched without regard to ASCII case,
+/// or `None` if the attribute is absent.
+///
+/// A present-but-empty attribute such as `disabled` returns `Some("")`.
 pub fn Element::get_attr(self : Element, name : String) -> String? {
   @internal.attribute(self.ctx.tree, self.id, name.to_lower())
 }
 
 ///|
+/// Whether the element has the attribute, matched without regard to ASCII
+/// case.
 pub fn Element::has_attr(self : Element, name : String) -> Bool {
   self.get_attr(name) is Some(_)
 }
 
 ///|
-/// The decoded text of all descendant text nodes.
+/// The decoded text of all descendant text nodes, concatenated in source
+/// order.
 pub fn Element::text(self : Element) -> String {
   @internal.text(self.ctx.tree, self.id)
 }
 
 ///|
-/// The element's inner HTML exactly as written.
+/// The element's inner HTML exactly as written in the source, without
+/// decoding or reformatting.
 pub fn Element::html(self : Element) -> String {
   @internal.slice(
     self.ctx.tree.source,
@@ -392,6 +505,9 @@ pub fn Element::html(self : Element) -> String {
 }
 
 ///|
+/// The first matching descendant element in source order, or `None`.
+///
+/// Raises `SelectorError` for a malformed or unsupported selector.
 pub fn Element::find(
   self : Element,
   selector : String,
@@ -400,6 +516,9 @@ pub fn Element::find(
 }
 
 ///|
+/// All matching descendant elements in source order.
+///
+/// Raises `SelectorError` for a malformed or unsupported selector.
 pub fn Element::all(
   self : Element,
   selector : String,
@@ -408,7 +527,8 @@ pub fn Element::all(
 }
 
 ///|
-/// Find the first descendant using a precompiled selector.
+/// The first matching descendant using a selector compiled by
+/// `Selector::parse`, or `None`.
 pub fn Element::find_with(self : Element, selector : Selector) -> Element? {
   let found = @internal.all(self.ctx.tree, self.id, selector.compiled, limit=1)
   if found.is_empty() {
@@ -419,7 +539,7 @@ pub fn Element::find_with(self : Element, selector : Selector) -> Element? {
 }
 
 ///|
-/// Find all descendants using a precompiled selector.
+/// All matching descendants using a selector compiled by `Selector::parse`.
 pub fn Element::all_with(self : Element, selector : Selector) -> Array[Element] {
   @internal.all(self.ctx.tree, self.id, selector.compiled).map(id => {
     element(self.ctx, id)
@@ -427,6 +547,9 @@ pub fn Element::all_with(self : Element, selector : Selector) -> Array[Element] 
 }
 
 ///|
+/// Whether the element itself matches `selector`.
+///
+/// Raises `SelectorError` for a malformed or unsupported selector.
 pub fn Element::matches(
   self : Element,
   selector : String,
@@ -435,7 +558,10 @@ pub fn Element::matches(
 }
 
 ///|
-/// Return this element or its nearest matching ancestor.
+/// The element itself if it matches `selector`, otherwise the nearest
+/// matching ancestor; `None` if neither matches.
+///
+/// Raises `SelectorError` for a malformed or unsupported selector.
 pub fn Element::closest(
   self : Element,
   selector : String,
@@ -452,13 +578,15 @@ pub fn Element::closest(
 }
 
 ///|
-/// Match this element against a precompiled selector.
+/// Whether the element itself matches a selector compiled by
+/// `Selector::parse`.
 pub fn Element::matches_with(self : Element, selector : Selector) -> Bool {
   @internal.matches(self.ctx.tree, self.id, selector.compiled)
 }
 
 ///|
-/// Return this element or its nearest ancestor matching a precompiled selector.
+/// The element itself if it matches a selector compiled by `Selector::parse`,
+/// otherwise the nearest matching ancestor; `None` if neither matches.
 pub fn Element::closest_with(self : Element, selector : Selector) -> Element? {
   let mut id = self.id
   while id > 0 {
@@ -476,6 +604,7 @@ pub impl Stringify for Element with fn stringify(self) {
 }
 
 ///|
+/// The document this node belongs to.
 pub fn Node::document(self : Node) -> Document {
   match self {
     Element(node) => node.document()
@@ -486,6 +615,7 @@ pub fn Node::document(self : Node) -> Document {
 }
 
 ///|
+/// The zero-based UTF-16 offset at which this node starts.
 pub fn Node::start(self : Node) -> Int32 {
   match self {
     Element(node) => node.start()
@@ -496,6 +626,7 @@ pub fn Node::start(self : Node) -> Int32 {
 }
 
 ///|
+/// The zero-based UTF-16 offset just past this node.
 pub fn Node::end(self : Node) -> Int32 {
   match self {
     Element(node) => node.end()
@@ -506,6 +637,8 @@ pub fn Node::end(self : Node) -> Int32 {
 }
 
 ///|
+/// The node's parent: an enclosing element, or the document for top-level
+/// nodes.
 pub fn Node::parent(self : Node) -> Parent {
   match self {
     Element(node) => node.parent()
@@ -526,26 +659,32 @@ pub impl Stringify for Node with fn stringify(self) {
 }
 
 ///|
+/// The text content with entities decoded, e.g. `&amp;` becomes `&`.
 pub fn Text::value(self : Text) -> String {
   @internal.value(self.ctx.tree, self.id)
 }
 
 ///|
+/// The document this text node belongs to.
 pub fn Text::document(self : Text) -> Document {
   { ctx: self.ctx, }
 }
 
 ///|
+/// The zero-based UTF-16 offset at which the text starts.
 pub fn Text::start(self : Text) -> Int32 {
   self.ctx.tree.start[self.id]
 }
 
 ///|
+/// The zero-based UTF-16 offset just past the text.
 pub fn Text::end(self : Text) -> Int32 {
   self.ctx.tree.end[self.id]
 }
 
 ///|
+/// The text node's parent: an enclosing element, or the document for
+/// top-level text.
 pub fn Text::parent(self : Text) -> Parent {
   leaf_parent(self.ctx, self.id)
 }
@@ -556,26 +695,32 @@ pub impl Stringify for Text with fn stringify(self) {
 }
 
 ///|
+/// The comment content without the surrounding `<!--` and `-->`.
 pub fn Comment::value(self : Comment) -> String {
   @internal.value(self.ctx.tree, self.id)
 }
 
 ///|
+/// The document this comment belongs to.
 pub fn Comment::document(self : Comment) -> Document {
   { ctx: self.ctx, }
 }
 
 ///|
+/// The zero-based UTF-16 offset at which the comment starts, pointing at `<!`.
 pub fn Comment::start(self : Comment) -> Int32 {
   self.ctx.tree.start[self.id]
 }
 
 ///|
+/// The zero-based UTF-16 offset just past the comment's `-->`.
 pub fn Comment::end(self : Comment) -> Int32 {
   self.ctx.tree.end[self.id]
 }
 
 ///|
+/// The comment's parent: an enclosing element, or the document for top-level
+/// comments.
 pub fn Comment::parent(self : Comment) -> Parent {
   leaf_parent(self.ctx, self.id)
 }
@@ -586,26 +731,32 @@ pub impl Stringify for Comment with fn stringify(self) {
 }
 
 ///|
+/// The directive's raw content, e.g. `doctype html` for `<!doctype html>`.
 pub fn Directive::value(self : Directive) -> String {
   @internal.value(self.ctx.tree, self.id)
 }
 
 ///|
+/// The document this directive belongs to.
 pub fn Directive::document(self : Directive) -> Document {
   { ctx: self.ctx, }
 }
 
 ///|
+/// The zero-based UTF-16 offset at which the directive starts, pointing at `<!`.
 pub fn Directive::start(self : Directive) -> Int32 {
   self.ctx.tree.start[self.id]
 }
 
 ///|
+/// The zero-based UTF-16 offset just past the directive's closing `>`.
 pub fn Directive::end(self : Directive) -> Int32 {
   self.ctx.tree.end[self.id]
 }
 
 ///|
+/// The directive's parent: always the document, since directives only appear
+/// at the top level.
 pub fn Directive::parent(self : Directive) -> Parent {
   leaf_parent(self.ctx, self.id)
 }
@@ -616,6 +767,7 @@ pub impl Stringify for Directive with fn stringify(self) {
 }
 
 ///|
+/// Resolve the parent of a leaf (non-element) node as a `Parent` value.
 fn leaf_parent(ctx : Context, id : Int32) -> Parent {
   let parent = ctx.tree.parent[id]
   if parent == 0 {

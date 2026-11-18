@@ -1,19 +1,25 @@
 ///|
+/// Trie node bits holding the value's code-unit length.
 const VALUE_LENGTH = 0b1100_0000_0000_0000
 
 ///|
+/// Trie node bit marking a packed run of continuation chars.
 const FLAG13 = 0b0010_0000_0000_0000
 
 ///|
+/// Trie node bits holding the branch count.
 const BRANCH_LENGTH = 0b0001_1111_1000_0000
 
 ///|
+/// Trie node bits holding the jump-table offset.
 const JUMP_TABLE = 0b0000_0000_0111_1111
 
 ///|
+/// Mask for the value bits of a trie node.
 const VALUE_MASK = 0b0001_1111_1111_1111
 
 ///|
+/// Build the ASCII-to-base91 decode table.
 fn base91_table() -> Array[Int32] {
   let table = Array::make(127, 0)
   let mut code = 0
@@ -27,9 +33,11 @@ fn base91_table() -> Array[Int32] {
 }
 
 ///|
+/// The shared base91 decode table.
 let base91 : Array[Int32] = base91_table()
 
 ///|
+/// Rebuild the entity trie from the packed base91 dictionary.
 fn decode_trie_dict(
   input : String,
   result_length : Int32,
@@ -174,11 +182,13 @@ fn decode_trie_dict(
 }
 
 ///|
+/// The decoded HTML5 named-entity trie.
 let html_tree : Array[Int32] = decode_trie_dict(
   packed_html_entities, 13494, 2713, 49, 25, 61,
 )
 
 ///|
+/// Follow one continuation char from a trie node, or return -1.
 fn determine_branch(
   tree : Array[Int32],
   current : Int32,
@@ -221,6 +231,7 @@ fn determine_branch(
 }
 
 ///|
+/// Convert a code point to a string, replacing invalid ones with U+FFFD.
 fn codepoint_string(code : Int32) -> String {
   let replaced = replace_codepoint(code)
   match replaced.to_char() {
@@ -230,6 +241,7 @@ fn codepoint_string(code : Int32) -> String {
 }
 
 ///|
+/// Read a decoded entity value of `length` code units from the trie.
 fn trie_value(tree : Array[Int32], node : Int32, length : Int32) -> String {
   if length == 1 {
     return codepoint_string(tree[node] & VALUE_MASK)
@@ -248,6 +260,7 @@ fn trie_value(tree : Array[Int32], node : Int32, length : Int32) -> String {
 }
 
 ///|
+/// Map disallowed code points (surrogates, noncharacters, controls) per the HTML spec.
 fn replace_codepoint(code : Int32) -> Int32 {
   if code == 0 || (code >= 0xd800 && code <= 0xdfff) || code > 0x10ffff {
     return 0xfffd
@@ -265,6 +278,7 @@ fn replace_codepoint(code : Int32) -> Int32 {
 }
 
 ///|
+/// Parse a `&#...;` numeric reference, returning units consumed and code point.
 fn numeric_entity(input : String, start : Int32) -> (Int32, Int32) {
   let mut offset = start + 1
   let mut code = 0
@@ -310,11 +324,13 @@ fn numeric_entity(input : String, start : Int32) -> (Int32, Int32) {
 }
 
 ///|
+/// Whether a char makes an unterminated entity invalid inside an attribute.
 fn invalid_attribute_end(code : Int32) -> Bool {
   code == 61 || is_alpha(code) || (code >= 48 && code <= 57)
 }
 
 ///|
+/// Decode HTML entities in `input`; `attribute` enables attribute-context rules.
 pub fn decode_html(input : String, attribute~ : Bool = false) -> String {
   let tree = html_tree
   let mut offset = find_from(input, "&", 0)
@@ -492,16 +508,19 @@ pub fn decode_html(input : String, attribute~ : Bool = false) -> String {
 }
 
 ///|
+/// Escape text content for serialization.
 pub fn escape_text(input : String) -> String {
   escape(input, false)
 }
 
 ///|
+/// Escape an attribute value for serialization.
 pub fn escape_attribute(input : String) -> String {
   escape(input, true)
 }
 
 ///|
+/// Shared escaper for text and attribute contexts.
 fn escape(input : String, attribute : Bool) -> String {
   let output = StringBuilder()
   let mut start = 0

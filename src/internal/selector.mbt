@@ -1,9 +1,11 @@
 ///|
+/// A selector parse failure with a human-readable message.
 pub suberror SelectorSyntax {
   Message(String)
 }
 
 ///|
+/// Attribute selector operators (`=`, `~=`, `|=`, `^=`, `$=`, `*=`).
 #derive(Eq)
 pub(all) enum Operator {
   Exists
@@ -16,6 +18,7 @@ pub(all) enum Operator {
 }
 
 ///|
+/// How a compound selector relates to the previous one.
 #derive(Eq)
 pub(all) enum Combinator {
   Descendant
@@ -25,6 +28,7 @@ pub(all) enum Combinator {
 }
 
 ///|
+/// One attribute condition of a compound selector.
 pub struct AttributeRule {
   name : String
   operator : Operator
@@ -33,6 +37,7 @@ pub struct AttributeRule {
 }
 
 ///|
+/// Supported pseudo-classes (`:first-child`, `:nth-*`, `:not`, ...).
 pub(all) enum Pseudo {
   Root
   Empty
@@ -42,6 +47,7 @@ pub(all) enum Pseudo {
 }
 
 ///|
+/// A compound selector: tag/id/class/attribute/pseudo conditions.
 pub struct Compound {
   mut tag : String
   mut raw : String
@@ -52,27 +58,32 @@ pub struct Compound {
 }
 
 ///|
+/// A full selector: a compound plus its combinator chain.
 pub struct Complex {
   compounds : Array[Compound]
   combinators : Array[Combinator]
 }
 
 ///|
+/// A compiled selector list with precomputed candidate tags.
 pub struct Selector {
   rules : Array[Complex]
   candidate_tags : Array[String]?
 }
 
 ///|
+/// Cursor over selector source text.
 priv struct Parser {
   input : String
   mut index : Int32
 }
 
 ///|
+/// Bounded cache of compiled selectors keyed by source text.
 let selector_cache : Map[String, Selector] = Map([])
 
 ///|
+/// Abort parsing with a `SelectorSyntax` message.
 fn Parser::fail(self : Parser, reason : String) -> Unit raise SelectorSyntax {
   raise SelectorSyntax::Message(
     "\{reason} at \{self.index} in selector \"\{self.input}\"",
@@ -80,6 +91,7 @@ fn Parser::fail(self : Parser, reason : String) -> Unit raise SelectorSyntax {
 }
 
 ///|
+/// Consume CSS whitespace, returning whether any was seen.
 fn Parser::spaces(self : Parser) -> Bool {
   let from = self.index
   while self.index < self.input.length() &&
@@ -90,11 +102,13 @@ fn Parser::spaces(self : Parser) -> Bool {
 }
 
 ///|
+/// Whether the code unit is CSS whitespace.
 fn is_css_space(code : Int32) -> Bool {
   is_space(code) || code == 0xa0
 }
 
 ///|
+/// Whether the code unit can appear in a CSS identifier.
 fn is_ident(code : Int32) -> Bool {
   code == 45 ||
   code == 95 ||
@@ -104,6 +118,7 @@ fn is_ident(code : Int32) -> Bool {
 }
 
 ///|
+/// Parse a CSS identifier, handling backslash escapes.
 fn Parser::ident(self : Parser) -> String raise SelectorSyntax {
   let output = StringBuilder()
   while self.index < self.input.length() {
@@ -166,6 +181,7 @@ fn Parser::ident(self : Parser) -> String raise SelectorSyntax {
 }
 
 ///|
+/// Parse a quoted string, handling backslash escapes.
 fn Parser::quoted(self : Parser) -> String raise SelectorSyntax {
   let quote = code_at(self.input, self.index)
   self.index += 1
@@ -193,6 +209,7 @@ fn Parser::quoted(self : Parser) -> String raise SelectorSyntax {
 }
 
 ///|
+/// Parse one `[...]` attribute selector.
 fn Parser::attribute(self : Parser) -> AttributeRule raise SelectorSyntax {
   self.index += 1
   let _ = self.spaces()
@@ -247,6 +264,7 @@ fn Parser::attribute(self : Parser) -> AttributeRule raise SelectorSyntax {
 }
 
 ///|
+/// Parse an integer in a source range, or `None`.
 fn parse_integer(input : String, start : Int32, end : Int32) -> Int32? {
   if start >= end {
     return None
@@ -275,6 +293,7 @@ fn parse_integer(input : String, start : Int32, end : Int32) -> Int32? {
 }
 
 ///|
+/// Parse an `:nth-*` expression into (a, b) coefficients.
 fn nth(input : String) -> (Int32, Int32) raise SelectorSyntax {
   let cleaned = StringBuilder()
   for i in 0..<input.length() {
@@ -332,6 +351,7 @@ fn nth(input : String) -> (Int32, Int32) raise SelectorSyntax {
 }
 
 ///|
+/// Parse one `:pseudo-class` and its arguments.
 fn Parser::pseudo(self : Parser) -> Array[Pseudo] raise SelectorSyntax {
   self.index += 1
   let name = self.ident().to_lower()
@@ -399,6 +419,7 @@ fn Parser::pseudo(self : Parser) -> Array[Pseudo] raise SelectorSyntax {
 }
 
 ///|
+/// Parse one compound selector.
 fn Parser::compound(self : Parser) -> Compound raise SelectorSyntax {
   let output : Compound = {
     tag: "",
@@ -444,6 +465,7 @@ fn Parser::compound(self : Parser) -> Compound raise SelectorSyntax {
 }
 
 ///|
+/// Parse selector text into a compiled `Selector`, caching the result.
 pub fn compile(input : String) -> Selector raise SelectorSyntax {
   if selector_cache.get(input) is Some(cached) {
     return cached
@@ -513,6 +535,7 @@ pub fn compile(input : String) -> Selector raise SelectorSyntax {
 }
 
 ///|
+/// Whether `actual` contains `expected` as a whitespace-separated word.
 fn has_word(actual : String, expected : String) -> Bool {
   let wanted = expected.length()
   if wanted == 0 {
@@ -535,6 +558,7 @@ fn has_word(actual : String, expected : String) -> Bool {
 }
 
 ///|
+/// Test one attribute rule against an element.
 fn match_attribute(tree : Tree, id : Int32, rule : AttributeRule) -> Bool {
   guard attribute(tree, id, rule.name) is Some(found) else { return false }
   if rule.operator == Operator::Exists {
@@ -571,6 +595,7 @@ fn match_attribute(tree : Tree, id : Int32, rule : AttributeRule) -> Bool {
 }
 
 ///|
+/// Test one pseudo-class against an element.
 fn match_pseudo(tree : Tree, id : Int32, rule : Pseudo) -> Bool {
   match rule {
     Root => tree.parent[id] == 0
@@ -613,6 +638,7 @@ fn match_pseudo(tree : Tree, id : Int32, rule : Pseudo) -> Bool {
 }
 
 ///|
+/// Test a compound selector against an element.
 fn match_compound(tree : Tree, id : Int32, rule : Compound) -> Bool {
   if !rule.tag.is_empty() &&
     tree.name[id] != rule.tag &&
@@ -644,6 +670,7 @@ fn match_compound(tree : Tree, id : Int32, rule : Compound) -> Bool {
 }
 
 ///|
+/// Test a complex selector (with combinators) against an element.
 fn match_complex(
   tree : Tree,
   id : Int32,
@@ -693,6 +720,7 @@ fn match_complex(
 }
 
 ///|
+/// Whether the element `id` matches the compiled selector.
 pub fn matches(tree : Tree, id : Int32, selector : Selector) -> Bool {
   for rule in selector.rules {
     if match_complex(tree, id, rule, rule.compounds.length() - 1) {
@@ -703,6 +731,7 @@ pub fn matches(tree : Tree, id : Int32, selector : Selector) -> Bool {
 }
 
 ///|
+/// Precomputed candidate element ids for the selector's rightmost compound, if any.
 fn candidates(tree : Tree, selector : Selector) -> Array[Int32]? {
   guard selector.candidate_tags is Some(names) else { return None }
   if tree.tags is None {
@@ -735,6 +764,7 @@ fn candidates(tree : Tree, selector : Selector) -> Array[Int32]? {
 }
 
 ///|
+/// All element ids under `root` matching the compiled selector, in source order.
 pub fn all(
   tree : Tree,
   root : Int32,

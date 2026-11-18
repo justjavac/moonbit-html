@@ -1,28 +1,36 @@
 ///|
+/// Hash mask for the open-addressed name table.
 const MASK = 511
 
 ///|
+/// Parser flag: element never has children or a close tag.
 const IS_VOID = 1
 
 ///|
+/// Parser flag: element content is raw text.
 const IS_RAW = 2
 
 ///|
+/// Parser flag: element switches to foreign (SVG/MathML) content.
 const IS_FOREIGN = 4
 
 ///|
+/// Parser flag: element switches back to HTML content.
 const IS_INTEGRATION = 8
 
 ///|
+/// Parser flag: the open tag implies closing certain open elements.
 const HAS_IMPLIES = 16
 
 ///|
+/// Open-addressed intern table mapping names to parser flags.
 priv struct NameTable {
   names : Array[String?]
   flags : Array[Int32]
 }
 
 ///|
+/// Lowercase one ASCII code unit, leaving non-letters unchanged.
 fn lower_ascii(code : Int32) -> Int32 {
   if code >= 65 && code <= 90 {
     code + 32
@@ -32,6 +40,7 @@ fn lower_ascii(code : Int32) -> Int32 {
 }
 
 ///|
+/// Hash a source slice for the intern table.
 fn hash_name(source : String, from : Int32, to : Int32) -> Int32 {
   let mut hash = 0
   for i in from..<to {
@@ -41,6 +50,7 @@ fn hash_name(source : String, from : Int32, to : Int32) -> Int32 {
 }
 
 ///|
+/// ASCII case-insensitive comparison of a source slice with an interned name.
 fn same_name(source : String, from : Int32, name : String) -> Bool {
   for i in 0..<name.length() {
     if lower_ascii(unsafe_code_at(source, from + i)) !=
@@ -52,6 +62,7 @@ fn same_name(source : String, from : Int32, name : String) -> Bool {
 }
 
 ///|
+/// Build the intern table from a list of known names.
 fn make_table(names : Array[String]) -> NameTable {
   let slots = Array::make(MASK + 1, None)
   let flags : Array[Int32] = Array::make(MASK + 1, 0)
@@ -67,6 +78,7 @@ fn make_table(names : Array[String]) -> NameTable {
 }
 
 ///|
+/// Intern a source slice, returning the canonical name and its flags.
 fn intern(
   table : NameTable,
   source : String,
@@ -94,6 +106,7 @@ fn intern(
 }
 
 ///|
+/// The intern table of HTML tag names.
 let known : NameTable = make_table([
   "script", "style", "textarea", "title", "xmp", "iframe", "noembed", "noframes",
   "plaintext", "area", "base", "basefont", "br", "col", "command", "embed", "frame",
@@ -109,6 +122,7 @@ let known : NameTable = make_table([
 ])
 
 ///|
+/// Lowercase a tag name, handling the Latin-1 supplement range used by HTML.
 fn lower_unicode(input : String) -> String {
   let output = StringBuilder()
   for char in input {
@@ -133,12 +147,14 @@ fn tag_info(source : String, from : Int32, to : Int32) -> (String, Int32) {
 }
 
 ///|
+/// The interned lowercase form of the tag name in `source` from `from` to `to`.
 pub fn tag_name(source : String, from : Int32, to : Int32) -> String {
   let (name, _) = intern(known, source, from, to)
   name
 }
 
 ///|
+/// Derive parser flags for a name absent from the intern table.
 fn compute_flags(name : String) -> Int32 {
   let mut result = 0
   if is_void(name) {
@@ -180,6 +196,7 @@ pub fn flags(name : String) -> Int32 {
 }
 
 ///|
+/// Whether the tag never has children or a close tag (e.g. `br`).
 pub fn is_void(name : String) -> Bool {
   match name {
     "area"
@@ -206,6 +223,7 @@ pub fn is_void(name : String) -> Bool {
 }
 
 ///|
+/// Whether the tag's content is raw text (e.g. `script`, `textarea`).
 pub fn is_raw(name : String) -> Bool {
   match name {
     "script"
@@ -222,6 +240,7 @@ pub fn is_raw(name : String) -> Bool {
 }
 
 ///|
+/// Whether the raw-text tag's content is never entity-decoded (e.g. `script`).
 pub fn is_literal(name : String) -> Bool {
   match name {
     "script"
@@ -236,6 +255,7 @@ pub fn is_literal(name : String) -> Bool {
 }
 
 ///|
+/// Whether the tag is a foreign-content integration point (e.g. `foreignObject`).
 pub fn is_integration(name : String) -> Bool {
   match name {
     "mi"
@@ -252,6 +272,7 @@ pub fn is_integration(name : String) -> Bool {
 }
 
 ///|
+/// Whether the tag participates in implied end tags.
 fn has_implies(name : String) -> Bool {
   match name {
     "tr"
@@ -307,6 +328,7 @@ fn has_implies(name : String) -> Bool {
 }
 
 ///|
+/// Whether an open tag named `name` implicitly closes the open element `open`.
 pub fn implies(name : String, open : String) -> Bool {
   match name {
     "tr" => open == "tr" || open == "th" || open == "td"
@@ -342,6 +364,7 @@ pub fn implies(name : String, open : String) -> Bool {
 }
 
 ///|
+/// The canonical camelCase form of an SVG tag name, or the name unchanged.
 pub fn svg_name(name : String) -> String {
   match name {
     "altglyph" => "altGlyph"

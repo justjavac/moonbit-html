@@ -4,6 +4,10 @@
 
 Fast, lossless HTML parsing with UTF-16 source offsets, lazy entity decoding, CSS selectors, and an optional mutable tree. Supports `native`, `js`, `wasm`, and `wasm-gc`.
 
+## Performance
+
+The fastest MoonBit HTML parser on every backend: parsing a 157 KB Wikipedia page takes **~190 µs on native** — 13× faster than the next-fastest MoonBit parser and 450×+ faster than the WHATWG-conforming ones — with precompiled selector queries in ~10 µs. Numbers and methodology: [`benchmark/README.md`](benchmark/README.md).
+
 ## Install
 
 ```bash

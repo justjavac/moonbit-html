@@ -1,4 +1,5 @@
 ///|
+/// Whether `actual` contains `expected` as a whitespace-separated word.
 fn has_word(actual : String, expected : String) -> Bool {
   let wanted = expected.length()
   if wanted == 0 {
@@ -19,6 +20,7 @@ fn has_word(actual : String, expected : String) -> Bool {
 }
 
 ///|
+/// Test one attribute rule against a mutable element state.
 fn match_attribute(state : State, rule : @internal.AttributeRule) -> Bool {
   let attrs = attributes(state)
   guard attrs.get(rule.name) is Some(found) else { return false }
@@ -56,6 +58,7 @@ fn match_attribute(state : State, rule : @internal.AttributeRule) -> Bool {
 }
 
 ///|
+/// Test one pseudo-class against a mutable element state.
 fn match_pseudo(state : State, rule : @internal.Pseudo) -> Bool {
   match rule {
     Root => state.parent is Some(parent) && parent.kind == StateKind::Document
@@ -93,6 +96,7 @@ fn match_pseudo(state : State, rule : @internal.Pseudo) -> Bool {
 }
 
 ///|
+/// Test a compound selector against a mutable element state.
 fn match_compound(state : State, rule : @internal.Compound) -> Bool {
   if !rule.tag.is_empty() && state.name != rule.tag && state.name != rule.raw {
     return false
@@ -127,6 +131,7 @@ fn match_compound(state : State, rule : @internal.Compound) -> Bool {
 }
 
 ///|
+/// Test a complex selector (with combinators) against a mutable state.
 fn match_complex(
   state : State,
   rule : @internal.Complex,
@@ -178,6 +183,7 @@ fn match_complex(
 }
 
 ///|
+/// Whether the state matches the compiled selector.
 fn matches(state : State, selector : @internal.Selector) -> Bool {
   if state.kind != StateKind::Element {
     return false
@@ -191,6 +197,7 @@ fn matches(state : State, selector : @internal.Selector) -> Bool {
 }
 
 ///|
+/// All states under `state` matching the compiled selector, in source order.
 fn all(
   root : State,
   selector : @internal.Selector,
@@ -231,6 +238,7 @@ fn all(
 }
 
 ///|
+/// Compile selector text, remapping the internal error to `HtmlError`.
 fn compile(input : String) -> @internal.Selector raise HtmlError {
   @internal.compile(input) catch {
     @internal.SelectorSyntax::Message(message) =>

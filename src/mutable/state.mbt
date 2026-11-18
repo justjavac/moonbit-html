@@ -1,4 +1,5 @@
 ///|
+/// The kind of a mutable node state.
 #derive(Eq)
 priv enum StateKind {
   Document
@@ -9,6 +10,7 @@ priv enum StateKind {
 }
 
 ///|
+/// A mutable node: tree link, parent/children links, and lazy caches.
 priv struct State {
   kind : StateKind
   mut doc : State?
@@ -29,9 +31,11 @@ priv struct State {
 }
 
 ///|
+/// Monotonic source of state identities.
 let state_counter : Ref[Int32] = { val: 0, }
 
 ///|
+/// Allocate a fresh state with a new identity.
 fn create(kind : StateKind, doc : State?, name~ : String = "") -> State {
   state_counter.val += 1
   {
@@ -55,6 +59,7 @@ fn create(kind : StateKind, doc : State?, name~ : String = "") -> State {
 }
 
 ///|
+/// Map an internal node kind to a `StateKind`.
 fn kind_of(kind : @internal.Kind) -> StateKind {
   match kind {
     Document => StateKind::Document
@@ -66,11 +71,13 @@ fn kind_of(kind : @internal.Kind) -> StateKind {
 }
 
 ///|
+/// The document state owning this state.
 fn doc_of(state : State) -> State {
   state.doc.unwrap_or(state)
 }
 
 ///|
+/// Materialize a parsed tree as child states of `doc`.
 fn load(tree : @internal.Tree, doc : State) -> Array[State] {
   let states : Array[State?] = Array::make(tree.size, None)
   let top : Array[State] = []
@@ -107,6 +114,7 @@ fn load(tree : @internal.Tree, doc : State) -> Array[State] {
 }
 
 ///|
+/// Build the root state of a mutable document from source.
 fn document(source : String) -> State {
   let tree = @internal.build(source)
   let doc = create(StateKind::Document, None)
@@ -125,6 +133,7 @@ fn document(source : String) -> State {
 }
 
 ///|
+/// The state's attribute map, built on first use and cached.
 fn attributes(state : State) -> Map[String, String] {
   if state.attrs is Some(cached) {
     return cached
@@ -138,6 +147,7 @@ fn attributes(state : State) -> Map[String, String] {
 }
 
 ///|
+/// The state's decoded leaf content, cached.
 fn state_value(state : State) -> String {
   if state.value is Some(value) {
     return value
@@ -151,6 +161,7 @@ fn state_value(state : State) -> String {
 }
 
 ///|
+/// The decoded text of all descendant text states.
 fn state_text(state : State) -> String {
   if state.kind == StateKind::Text {
     return state_value(state)
@@ -167,6 +178,7 @@ fn state_text(state : State) -> String {
 }
 
 ///|
+/// Mark a state and its ancestors dirty so serialization rebuilds them.
 fn touch(state : State?) -> Unit {
   let mut current = state
   while current is Some(value) && !value.dirty {
@@ -176,6 +188,7 @@ fn touch(state : State?) -> Unit {
 }
 
 ///|
+/// Reassign a state and its descendants to a document.
 fn adopt(state : State, doc : State) -> Unit {
   if doc_of(state).identity == doc.identity {
     return
@@ -187,6 +200,7 @@ fn adopt(state : State, doc : State) -> Unit {
 }
 
 ///|
+/// Unlink a state from its parent.
 fn detach(state : State) -> Unit {
   guard state.parent is Some(parent) else { return }
   let mut at = -1
@@ -203,6 +217,7 @@ fn detach(state : State) -> Unit {
 }
 
 ///|
+/// Splice states into a parent's children at an index, with validation.
 fn insert(
   parent : State,
   index : Int32,
@@ -245,6 +260,7 @@ fn insert(
 }
 
 ///|
+/// Deep-copy a state tree with fresh identities.
 fn clone_state(state : State) -> State {
   state_counter.val += 1
   let copy : State = {
@@ -262,6 +278,7 @@ fn clone_state(state : State) -> State {
 }
 
 ///|
+/// Create a fresh text state holding a literal string.
 fn text_node(doc : State, input : String) -> State {
   let state = create(StateKind::Text, Some(doc))
   state.value = Some(input)
@@ -269,11 +286,13 @@ fn text_node(doc : State, input : String) -> State {
 }
 
 ///|
+/// Parse an HTML string into states for insertion.
 fn fragment(doc : State, html : String, foreign : Bool) -> Array[State] {
   load(@internal.build(html, foreign~), doc)
 }
 
 ///|
+/// Set or replace one attribute, recording renames.
 fn set_attribute(state : State, name : String, value : String) -> Unit {
   let key = name.to_lower()
   let current = attributes(state)
@@ -290,6 +309,7 @@ fn set_attribute(state : State, name : String, value : String) -> Unit {
 }
 
 ///|
+/// Remove one attribute if present.
 fn remove_attribute(state : State, key : String) -> Unit {
   let current = attributes(state)
   if !current.contains(key) {
@@ -308,6 +328,7 @@ fn remove_attribute(state : State, key : String) -> Unit {
 }
 
 ///|
+/// Change an element's tag name, with void/raw-text validation.
 fn rename(state : State, input : String) -> Unit raise HtmlError {
   let lower = input.to_lower()
   let inside = within(state)
@@ -335,12 +356,14 @@ fn rename(state : State, input : String) -> Unit raise HtmlError {
 }
 
 ///|
+/// Whether `input` round-trips as a comment/directive value.
 fn valid_leaf(html : String, kind : @internal.Kind, input : String) -> Bool {
   let tree = @internal.build(html)
   tree.size == 2 && tree.kind[1] == kind && @internal.value(tree, 1) == input
 }
 
 ///|
+/// Replace a leaf state's content.
 fn set_value(state : State, input : String) -> Unit {
   state.value = Some(input)
   state.changed = true
@@ -348,6 +371,7 @@ fn set_value(state : State, input : String) -> Unit {
 }
 
 ///|
+/// Swap all children of a state for new states.
 fn replace_children(
   state : State,
   items : Array[State],
@@ -359,6 +383,7 @@ fn replace_children(
 }
 
 ///|
+/// Serialize attributes added on top of the source's own.
 fn added(
   state : State,
   entries : Array[(String, String)],
@@ -379,6 +404,7 @@ fn added(
 }
 
 ///|
+/// Close an open tag, self-closing when `slash` is set.
 fn tag_end(tag : String, slash : Bool) -> String {
   if !slash {
     return tag + ">"
@@ -388,12 +414,14 @@ fn tag_end(tag : String, slash : Bool) -> String {
 }
 
 ///|
+/// Whether the state's element was self-closing in the source.
 fn self_closed(tree : @internal.Tree, state : State) -> Bool {
   tree.from[state.id] == tree.end[state.id] &&
   @internal.self_closing(state.source, tree.head[state.id])
 }
 
 ///|
+/// Serialize the state's open tag, preserving untouched source when possible.
 fn open_tag(state : State, slash : Bool) -> String {
   let entries = attributes(state).to_array()
   guard state.tree is Some(tree) else {
@@ -461,6 +489,7 @@ fn open_tag(state : State, slash : Bool) -> String {
 }
 
 ///|
+/// Whether the state's element had a close tag in the source.
 fn ended(state : State) -> Bool {
   guard state.kind == StateKind::Element &&
     state.tree is Some(tree) &&
@@ -471,6 +500,7 @@ fn ended(state : State) -> Bool {
 }
 
 ///|
+/// Whether serialization may drop the close tag for this element.
 fn unclosed(state : State, parent : State, next : State?) -> Bool {
   guard state.kind == StateKind::Element &&
     state.tree is Some(tree) &&
@@ -500,6 +530,7 @@ fn unclosed(state : State, parent : State, next : State?) -> Bool {
 }
 
 ///|
+/// Serialize the state's children.
 fn content(state : State) -> String {
   let output = StringBuilder()
   for i in 0..<state.children.length() {
@@ -521,6 +552,7 @@ fn content(state : State) -> String {
 }
 
 ///|
+/// Whether the state is inside foreign (SVG/MathML) content.
 fn foreign_state(state : State) -> Bool {
   if state.kind != StateKind::Element {
     return false
@@ -535,6 +567,7 @@ fn foreign_state(state : State) -> Bool {
 }
 
 ///|
+/// Whether the state's ancestors put it in foreign content.
 fn within(state : State) -> Bool {
   if state.parent is Some(parent) {
     return foreign_state(parent)
@@ -547,6 +580,7 @@ fn within(state : State) -> Bool {
 }
 
 ///|
+/// How child text is written for a raw-text parent.
 fn text_mode(name : String, foreign : Bool) -> Int32 {
   if foreign || !@internal.is_raw(name) {
     return 0
@@ -559,6 +593,7 @@ fn text_mode(name : String, foreign : Bool) -> Int32 {
 }
 
 ///|
+/// The text mode implied by the state's current parent.
 fn current_mode(state : State?) -> Int32 {
   guard state is Some(value) &&
     value.kind == StateKind::Element &&
@@ -569,6 +604,7 @@ fn current_mode(state : State?) -> Int32 {
 }
 
 ///|
+/// Whether a text state moved across a raw-text boundary.
 fn misplaced(state : State) -> Bool {
   guard state.kind == StateKind::Text &&
     state.tree is Some(tree) &&
@@ -588,6 +624,7 @@ fn misplaced(state : State) -> Bool {
 }
 
 ///|
+/// Serialize the state, reusing the source slice when untouched.
 fn serialize(state : State) -> String {
   if !state.dirty && !misplaced(state) {
     return @internal.slice(state.source, state.start, state.end)
@@ -629,6 +666,7 @@ fn serialize(state : State) -> String {
 }
 
 ///|
+/// Serialize the state's inner content.
 fn inner(state : State) -> String {
   if !state.dirty && state.tree is Some(tree) {
     return @internal.slice(state.source, tree.from[state.id], tree.to[state.id])

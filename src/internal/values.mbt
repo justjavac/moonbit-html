@@ -1,9 +1,11 @@
 ///|
+/// Whether the code unit can appear in an attribute name.
 fn is_attribute_name(code : Int32) -> Bool {
   !(is_space(code) || code == 47 || code == 61 || code == 62)
 }
 
 ///|
+/// The index of a key in a flat key/value array, or -1.
 pub fn find_pair(
   list : Array[String],
   key : String,
@@ -20,6 +22,7 @@ pub fn find_pair(
 }
 
 ///|
+/// The element's attributes as a flat `[name, value, ...]` array, decoded and lowercase.
 pub fn pairs(tree : Tree, id : Int32) -> Array[String] {
   if tree.pairs is Some(cache) && cache[id] is Some(cached) {
     return cached
@@ -87,6 +90,7 @@ pub fn pairs(tree : Tree, id : Int32) -> Array[String] {
 }
 
 ///|
+/// The element's attributes as flat `[key, written name, raw span]` triples.
 pub fn spans(tree : Tree, id : Int32) -> Array[String] {
   let output : Array[String] = []
   let source = tree.source
@@ -145,6 +149,7 @@ pub fn spans(tree : Tree, id : Int32) -> Array[String] {
 }
 
 ///|
+/// The decoded value of one attribute, or `None` when absent.
 pub fn attribute(tree : Tree, id : Int32, key : String) -> String? {
   let list = pairs(tree, id)
   let at = find_pair(list, key)
@@ -156,6 +161,7 @@ pub fn attribute(tree : Tree, id : Int32, key : String) -> String? {
 }
 
 ///|
+/// The element's attributes as a name/value map, built on first use.
 pub fn attributes(tree : Tree, id : Int32) -> Map[String, String] {
   if tree.attrs is Some(cache) && cache[id] is Some(cached) {
     return cached
@@ -190,6 +196,7 @@ fn decodable(tree : Tree, id : Int32) -> Bool {
 }
 
 ///|
+/// The decoded content of a leaf node (text, comment, or directive).
 pub fn value(tree : Tree, id : Int32) -> String {
   let raw = slice(tree.source, tree.from[id], tree.to[id])
   if tree.kind[id] != Kind::Text || !decodable(tree, id) {
@@ -199,6 +206,7 @@ pub fn value(tree : Tree, id : Int32) -> String {
 }
 
 ///|
+/// The decoded text of all descendant text nodes of `id`.
 pub fn text(tree : Tree, id : Int32) -> String {
   if tree.kind[id] == Kind::Text {
     return value(tree, id)

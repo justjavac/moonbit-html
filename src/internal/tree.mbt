@@ -1,4 +1,5 @@
 ///|
+/// The kind of a tree node.
 #derive(Eq, Debug)
 pub(all) enum Kind {
   Document
@@ -9,6 +10,7 @@ pub(all) enum Kind {
 }
 
 ///|
+/// The compact parse tree: parallel arrays indexed by node id.
 pub struct Tree {
   source : String
   mut size : Int32
@@ -28,6 +30,7 @@ pub struct Tree {
 }
 
 ///|
+/// Incremental tree construction state.
 priv struct Builder {
   tree : Tree
   stack : Array[Int32]
@@ -39,6 +42,7 @@ priv struct Builder {
 }
 
 ///|
+/// Create a builder for one source document.
 fn Builder::new(source : String, foreign : Bool) -> Builder {
   let capacity = if source.length() / 16 > 64 {
     source.length() / 16
@@ -86,6 +90,7 @@ fn[T] put(items : Array[T], index : Int32, value : T) -> Unit {
 }
 
 ///|
+/// Append a node and return its id.
 fn Builder::add(
   self : Builder,
   kind : Kind,
@@ -111,6 +116,7 @@ fn Builder::add(
 }
 
 ///|
+/// Attach pending text up to `until`.
 fn Builder::flush(self : Builder, until : Int32) -> Unit {
   if until > self.text {
     let _ = self.add(
@@ -126,6 +132,7 @@ fn Builder::flush(self : Builder, until : Int32) -> Unit {
 }
 
 ///|
+/// Close the innermost open element.
 fn Builder::pop(self : Builder, at : Int32, inner : Int32) -> Unit {
   let id = self.stack.unsafe_pop()
   self.tree.end[id] = at
@@ -143,6 +150,7 @@ fn Builder::pop(self : Builder, at : Int32, inner : Int32) -> Unit {
 }
 
 ///|
+/// The offset just past an open tag and whether it self-closes, or -1.
 fn tag_end(source : String, from : Int32) -> (Int32, Bool) {
   let length = source.length()
   let mut i = from
@@ -222,12 +230,14 @@ fn tag_end(source : String, from : Int32) -> (Int32, Bool) {
 }
 
 ///|
+/// Whether the open tag starting at `head` is self-closing.
 pub fn self_closing(source : String, head : Int32) -> Bool {
   let (end, slash) = tag_end(source, head)
   end != -1 && slash
 }
 
 ///|
+/// The end offsets of a comment or bogus comment starting at `from`.
 fn comment_end(source : String, from : Int32) -> (Int32, Int32) {
   if code_at(source, from) == 62 {
     return (from, from + 1)
@@ -259,6 +269,7 @@ fn comment_end(source : String, from : Int32) -> (Int32, Int32) {
 }
 
 ///|
+/// The offset of the matching close tag for a raw-text element, or the source length.
 fn closing(source : String, name : String, from : Int32) -> Int32 {
   let mut at = from
   while true {
@@ -280,6 +291,7 @@ fn closing(source : String, name : String, from : Int32) -> Int32 {
 }
 
 ///|
+/// Whether the node is in foreign (SVG/MathML) content.
 pub fn foreign(tree : Tree, id : Int32) -> Bool {
   let mut current = id
   while current > 0 {
@@ -295,6 +307,7 @@ pub fn foreign(tree : Tree, id : Int32) -> Bool {
 }
 
 ///|
+/// Parse `source` into a compact tree.
 pub fn build(source : String, foreign~ : Bool = false) -> Tree {
   let builder = Builder::new(source, foreign)
   let length = source.length()
